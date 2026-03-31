@@ -26,10 +26,7 @@
       <div class="relative z-10 flex flex-col justify-between p-10 w-full">
         <!-- Logo -->
         <div class="flex items-center gap-3">
-          <div class="flex items-center justify-center w-9 h-9 bg-white/15 backdrop-blur-sm rounded-xl border border-white/20">
-            <img src="/favicon.ico" alt="Qualitec" class="w-5 h-5 object-contain" />
-          </div>
-          <span class="text-white font-semibold text-base tracking-tight">Qualitec</span>
+          <img src="/images/logo_qualitec.png" alt="Qualitec" class="h-10 object-contain" />
         </div>
 
         <!-- Tagline -->
@@ -64,67 +61,172 @@
       <div class="relative z-10 w-full max-w-xs px-6 py-10 lg:px-8">
         <!-- Logo mobile -->
         <div class="lg:hidden flex items-center gap-3 mb-8">
-          <div class="flex items-center justify-center w-9 h-9 bg-white/20 rounded-xl border border-white/30">
-            <img src="/favicon.ico" alt="Qualitec" class="w-5 h-5 object-contain" />
-          </div>
-          <span class="text-white font-semibold text-base">Qualitec</span>
-        </div>
-        <!-- Cabeçalho -->
-        <div class="mb-7">
-          <h2 class="font-bold mb-1 text-white lg:text-neutral-900" style="font-size: 1.6rem; letter-spacing: -0.02em;">
-            Bem-vindo de volta
-          </h2>
-          <p class="text-sm text-white/70 lg:text-neutral-500">Entre com suas credenciais para continuar</p>
+          <img src="/images/logo_qualitec.png" alt="Qualitec" class="h-9 object-contain" />
         </div>
 
-        <form @submit.prevent="handleLogin" novalidate class="space-y-4">
-
-          <div>
-            <label for="email" class="text-sm font-medium text-white/90 lg:text-neutral-700 block mb-1.5">E-mail</label>
-            <input
-              id="email"
-              v-model="form.email"
-              type="email"
-              autocomplete="email"
-              placeholder="seu@email.com"
-              class="w-full px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all bg-white/15 lg:bg-white border border-white/25 lg:border-neutral-200 text-white lg:text-neutral-900 placeholder:text-white/50 lg:placeholder:text-neutral-400 backdrop-blur-sm lg:backdrop-blur-none"
-              :class="{ 'border-red-400': errors.email }"
-            />
-            <p v-if="errors.email" class="text-xs mt-1 text-red-300 lg:text-red-500">{{ errors.email }}</p>
-          </div>
-
-          <div>
-            <div class="flex items-center justify-between mb-1.5">
-              <label for="password" class="text-sm font-medium text-white/90 lg:text-neutral-700">Senha</label>
-              <NuxtLink to="/forgot-password" class="text-xs font-medium text-indigo-300 lg:text-indigo-600 hover:text-white lg:hover:text-indigo-700 transition-colors">
-                Esqueceu a senha?
-              </NuxtLink>
-            </div>
-            <input
-              id="password"
-              v-model="form.password"
-              type="password"
-              autocomplete="current-password"
-              placeholder="••••••••"
-              class="w-full px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all bg-white/15 lg:bg-white border border-white/25 lg:border-neutral-200 text-white lg:text-neutral-900 placeholder:text-white/50 lg:placeholder:text-neutral-400 backdrop-blur-sm lg:backdrop-blur-none"
-              :class="{ 'border-red-400': errors.password }"
-            />
-            <p v-if="errors.password" class="text-xs mt-1 text-red-300 lg:text-red-500">{{ errors.password }}</p>
-          </div>
-
-          <div v-if="errors.general" class="bg-red-500/20 lg:bg-red-50 border border-red-400/40 lg:border-red-200 rounded-xl px-4 py-3">
-            <p class="text-sm text-red-200 lg:text-red-700">{{ errors.general }}</p>
-          </div>
-
+        <!-- Toggle login / cadastro -->
+        <div class="flex bg-white/10 lg:bg-neutral-100 rounded-xl p-1 mb-7">
           <button
-            type="submit"
-            :disabled="isLoading"
-            class="w-full py-3 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 shadow-md active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed transition-all mt-2"
+            type="button"
+            @click="mode = 'login'"
+            :class="[
+              'flex-1 py-2 text-sm font-medium rounded-lg transition-all',
+              mode === 'login'
+                ? 'bg-white text-neutral-900 shadow-sm'
+                : 'text-white/70 lg:text-neutral-500 hover:text-white lg:hover:text-neutral-700'
+            ]"
           >
-            {{ isLoading ? 'Entrando...' : 'Entrar' }}
+            Entrar
           </button>
+          <button
+            type="button"
+            @click="mode = 'register'"
+            :class="[
+              'flex-1 py-2 text-sm font-medium rounded-lg transition-all',
+              mode === 'register'
+                ? 'bg-white text-neutral-900 shadow-sm'
+                : 'text-white/70 lg:text-neutral-500 hover:text-white lg:hover:text-neutral-700'
+            ]"
+          >
+            Cadastrar
+          </button>
+        </div>
 
-        </form>
+        <!-- ===== FORMULÁRIO DE LOGIN ===== -->
+        <template v-if="mode === 'login'">
+          <div class="mb-6">
+            <h2 class="font-bold mb-1 text-white lg:text-neutral-900" style="font-size: 1.5rem; letter-spacing: -0.02em;">
+              Bem-vindo de volta
+            </h2>
+            <p class="text-sm text-white/70 lg:text-neutral-500">Entre com suas credenciais para continuar</p>
+          </div>
+
+          <form @submit.prevent="handleLogin" novalidate class="space-y-4">
+            <div>
+              <label for="email" class="text-sm font-medium text-white/90 lg:text-neutral-700 block mb-1.5">E-mail</label>
+              <input
+                id="email"
+                v-model="form.email"
+                type="email"
+                autocomplete="email"
+                placeholder="seu@email.com"
+                class="w-full px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all bg-white/15 lg:bg-white border border-white/25 lg:border-neutral-200 text-white lg:text-neutral-900 placeholder:text-white/50 lg:placeholder:text-neutral-400 backdrop-blur-sm lg:backdrop-blur-none"
+                :class="{ 'border-red-400': errors.email }"
+              />
+              <p v-if="errors.email" class="text-xs mt-1 text-red-300 lg:text-red-500">{{ errors.email }}</p>
+            </div>
+
+            <div>
+              <div class="flex items-center justify-between mb-1.5">
+                <label for="password" class="text-sm font-medium text-white/90 lg:text-neutral-700">Senha</label>
+                <NuxtLink to="/forgot-password" class="text-xs font-medium text-indigo-300 lg:text-indigo-600 hover:text-white lg:hover:text-indigo-700 transition-colors">
+                  Esqueceu a senha?
+                </NuxtLink>
+              </div>
+              <input
+                id="password"
+                v-model="form.password"
+                type="password"
+                autocomplete="current-password"
+                placeholder="••••••••"
+                class="w-full px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all bg-white/15 lg:bg-white border border-white/25 lg:border-neutral-200 text-white lg:text-neutral-900 placeholder:text-white/50 lg:placeholder:text-neutral-400 backdrop-blur-sm lg:backdrop-blur-none"
+                :class="{ 'border-red-400': errors.password }"
+              />
+              <p v-if="errors.password" class="text-xs mt-1 text-red-300 lg:text-red-500">{{ errors.password }}</p>
+            </div>
+
+            <div v-if="errors.general" class="bg-red-500/20 lg:bg-red-50 border border-red-400/40 lg:border-red-200 rounded-xl px-4 py-3">
+              <p class="text-sm text-red-200 lg:text-red-700">{{ errors.general }}</p>
+            </div>
+
+            <button
+              type="submit"
+              :disabled="isLoading"
+              class="w-full py-3 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 shadow-md active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed transition-all mt-2"
+            >
+              {{ isLoading ? 'Entrando...' : 'Entrar' }}
+            </button>
+          </form>
+        </template>
+
+        <!-- ===== FORMULÁRIO DE CADASTRO ===== -->
+        <template v-else>
+          <div class="mb-6">
+            <h2 class="font-bold mb-1 text-white lg:text-neutral-900" style="font-size: 1.5rem; letter-spacing: -0.02em;">
+              Criar conta
+            </h2>
+            <p class="text-sm text-white/70 lg:text-neutral-500">Preencha os dados para começar</p>
+          </div>
+
+          <!-- Sucesso -->
+          <div v-if="registerSuccess" class="bg-emerald-500/20 lg:bg-emerald-50 border border-emerald-400/40 lg:border-emerald-200 rounded-xl px-4 py-4 text-center">
+            <svg class="w-8 h-8 text-emerald-400 lg:text-emerald-500 mx-auto mb-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p class="text-sm font-medium text-emerald-200 lg:text-emerald-700">Conta criada com sucesso!</p>
+            <p class="text-xs text-emerald-300 lg:text-emerald-600 mt-1">Verifique seu e-mail para confirmar o cadastro.</p>
+            <button @click="mode = 'login'" class="mt-3 text-xs font-medium text-indigo-300 lg:text-indigo-600 hover:underline">
+              Ir para o login
+            </button>
+          </div>
+
+          <form v-else @submit.prevent="handleRegister" novalidate class="space-y-4">
+            <div>
+              <label for="reg-name" class="text-sm font-medium text-white/90 lg:text-neutral-700 block mb-1.5">Nome completo</label>
+              <input
+                id="reg-name"
+                v-model="regForm.fullName"
+                type="text"
+                autocomplete="name"
+                placeholder="Seu nome"
+                class="w-full px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all bg-white/15 lg:bg-white border border-white/25 lg:border-neutral-200 text-white lg:text-neutral-900 placeholder:text-white/50 lg:placeholder:text-neutral-400 backdrop-blur-sm lg:backdrop-blur-none"
+                :class="{ 'border-red-400': regErrors.fullName }"
+              />
+              <p v-if="regErrors.fullName" class="text-xs mt-1 text-red-300 lg:text-red-500">{{ regErrors.fullName }}</p>
+            </div>
+
+            <div>
+              <label for="reg-email" class="text-sm font-medium text-white/90 lg:text-neutral-700 block mb-1.5">E-mail</label>
+              <input
+                id="reg-email"
+                v-model="regForm.email"
+                type="email"
+                autocomplete="email"
+                placeholder="seu@email.com"
+                class="w-full px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all bg-white/15 lg:bg-white border border-white/25 lg:border-neutral-200 text-white lg:text-neutral-900 placeholder:text-white/50 lg:placeholder:text-neutral-400 backdrop-blur-sm lg:backdrop-blur-none"
+                :class="{ 'border-red-400': regErrors.email }"
+              />
+              <p v-if="regErrors.email" class="text-xs mt-1 text-red-300 lg:text-red-500">{{ regErrors.email }}</p>
+            </div>
+
+            <div>
+              <label for="reg-password" class="text-sm font-medium text-white/90 lg:text-neutral-700 block mb-1.5">Senha</label>
+              <input
+                id="reg-password"
+                v-model="regForm.password"
+                type="password"
+                autocomplete="new-password"
+                placeholder="Mínimo 6 caracteres"
+                class="w-full px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all bg-white/15 lg:bg-white border border-white/25 lg:border-neutral-200 text-white lg:text-neutral-900 placeholder:text-white/50 lg:placeholder:text-neutral-400 backdrop-blur-sm lg:backdrop-blur-none"
+                :class="{ 'border-red-400': regErrors.password }"
+              />
+              <p v-if="regErrors.password" class="text-xs mt-1 text-red-300 lg:text-red-500">{{ regErrors.password }}</p>
+            </div>
+
+            <div v-if="regErrors.general" class="bg-red-500/20 lg:bg-red-50 border border-red-400/40 lg:border-red-200 rounded-xl px-4 py-3">
+              <p class="text-sm text-red-200 lg:text-red-700">{{ regErrors.general }}</p>
+            </div>
+
+            <button
+              type="submit"
+              :disabled="isLoading"
+              class="w-full py-3 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 shadow-md active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed transition-all mt-2"
+            >
+              {{ isLoading ? 'Criando conta...' : 'Criar conta' }}
+            </button>
+          </form>
+        </template>
+
       </div>
     </div>
 
@@ -214,10 +316,18 @@ definePageMeta({
   middleware: ['redirect-if-auth'],
 })
 
-const { login, isLoading } = useAuth()
+const { login, register, isLoading } = useAuth()
 
+const mode = ref<'login' | 'register'>('login')
+
+// Login
 const form   = reactive({ email: '', password: '' })
 const errors = reactive({ email: '', password: '', general: '' })
+
+// Cadastro
+const regForm    = reactive({ fullName: '', email: '', password: '' })
+const regErrors  = reactive({ fullName: '', email: '', password: '', general: '' })
+const registerSuccess = ref(false)
 
 const videoDesktop = ref<HTMLVideoElement | null>(null)
 const videoMobile  = ref<HTMLVideoElement | null>(null)
@@ -240,6 +350,19 @@ function validate(): boolean {
   return true
 }
 
+function validateRegister(): boolean {
+  regErrors.fullName = ''
+  regErrors.email = ''
+  regErrors.password = ''
+  regErrors.general = ''
+  if (!regForm.fullName.trim()) { regErrors.fullName = 'Informe seu nome.'; return false }
+  if (!regForm.email) { regErrors.email = 'Informe seu e-mail.'; return false }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(regForm.email)) { regErrors.email = 'E-mail inválido.'; return false }
+  if (!regForm.password) { regErrors.password = 'Informe uma senha.'; return false }
+  if (regForm.password.length < 6) { regErrors.password = 'Mínimo 6 caracteres.'; return false }
+  return true
+}
+
 async function handleLogin() {
   if (!validate()) return
   try {
@@ -247,6 +370,16 @@ async function handleLogin() {
     await navigateTo('/')
   } catch {
     errors.general = 'E-mail ou senha incorretos.'
+  }
+}
+
+async function handleRegister() {
+  if (!validateRegister()) return
+  try {
+    await register(regForm.email, regForm.password, regForm.fullName)
+    registerSuccess.value = true
+  } catch (e: any) {
+    regErrors.general = e.message ?? 'Erro ao criar conta. Tente novamente.'
   }
 }
 </script>

@@ -28,7 +28,7 @@ export function useManagedUsers() {
       const sb = getClient()
       const { data, error: err } = await sb
         .from('profiles')
-        .select('id, full_name, email, avatar_url, role_global, status')
+        .select('id, full_name, email, avatar_url, role_global, status, job_title')
         .order('full_name')
       if (err) throw err
       members.value = (data ?? []) as Profile[]
@@ -91,6 +91,17 @@ export function useManagedUsers() {
     if (idx !== -1) members.value[idx] = { ...members.value[idx], status } as Profile
   }
 
+  async function updateJobTitle(userId: string, jobTitle: string): Promise<void> {
+    const sb = getClient()
+    const { error: err } = await sb
+      .from('profiles')
+      .update({ job_title: jobTitle || null })
+      .eq('id', userId)
+    if (err) throw err
+    const idx = members.value.findIndex(m => m.id === userId)
+    if (idx !== -1) members.value[idx] = { ...members.value[idx], job_title: jobTitle || null } as Profile
+  }
+
   function getManagedIds(masterUserId: string): string[] {
     return relations.value
       .filter(r => r.master_user_id === masterUserId)
@@ -109,5 +120,6 @@ export function useManagedUsers() {
     getManagedIds,
     updateRole,
     updateStatus,
+    updateJobTitle,
   }
 }

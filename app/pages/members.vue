@@ -19,6 +19,7 @@
         <thead>
           <tr class="border-b border-neutral-100 bg-neutral-50">
             <th class="text-left px-5 py-3 text-label-sm text-subtle font-medium">Membro</th>
+            <th class="text-left px-5 py-3 text-label-sm text-subtle font-medium">Cargo</th>
             <th class="text-left px-5 py-3 text-label-sm text-subtle font-medium">Perfil</th>
             <th class="text-left px-5 py-3 text-label-sm text-subtle font-medium">Status</th>
             <th class="text-left px-5 py-3 text-label-sm text-subtle font-medium">Gerencia</th>
@@ -48,11 +49,16 @@
               </div>
             </td>
 
+            <!-- Job title -->
+            <td class="px-5 py-3">
+              <span v-if="member.job_title" class="text-body-sm text-neutral-700">{{ member.job_title }}</span>
+              <span v-else class="text-body-sm text-muted">—</span>
+            </td>
+
             <!-- Role -->
             <td class="px-5 py-3">
               <span :class="roleBadge(member.role_global)">{{ roleLabel(member.role_global) }}</span>
             </td>
-
             <!-- Status -->
             <td class="px-5 py-3">
               <span :class="statusBadge(member.status)">{{ statusLabel(member.status) }}</span>
@@ -113,6 +119,10 @@
             <p class="text-micro text-muted mb-1">Status</p>
             <span :class="statusBadge(member.status)">{{ statusLabel(member.status) }}</span>
           </div>
+          <div v-if="(member as any).job_title" class="col-span-2">
+            <p class="text-micro text-muted mb-1">Cargo</p>
+            <p class="text-body-sm text-neutral-700">{{ (member as any).job_title }}</p>
+          </div>
           <div class="col-span-2" v-if="managedCountFor(member.id) > 0">
             <p class="text-micro text-muted mb-1">Gerencia</p>
             <p class="text-body-sm text-subtle">{{ managedCountFor(member.id) }} membro(s)</p>
@@ -154,6 +164,13 @@
           :options="roleOptions"
           :disabled="editTarget.role_global === 'master' && masterCount <= 1"
           :hint="editTarget.role_global === 'master' && masterCount <= 1 ? 'Deve existir ao menos um master.' : undefined"
+        />
+
+        <!-- Job title -->
+        <BaseInput
+          v-model="editJobTitle"
+          label="Cargo"
+          placeholder="Ex: Assistente Comercial, Auxiliar ADM..."
         />
 
         <!-- Status select -->
@@ -245,7 +262,7 @@ definePageMeta({
 const {
   members, isLoading, error,
   fetchMembers, fetchRelations, addRelation, removeRelation, getManagedIds,
-  updateRole, updateStatus,
+  updateRole, updateStatus, updateJobTitle,
 } = useManagedUsers()
 
 // ── Edit modal ──────────────────────────────────────────────
@@ -253,6 +270,7 @@ const showEditModal = ref(false)
 const editTarget    = ref<Profile | null>(null)
 const editRole      = ref<UserRole>('collaborator')
 const editStatus    = ref<UserStatus>('active')
+const editJobTitle  = ref('')
 const saving        = ref(false)
 const editError     = ref<string | null>(null)
 
@@ -272,10 +290,11 @@ const statusOptions = [
 ]
 
 function openEdit(member: Profile) {
-  editTarget.value  = member
-  editRole.value    = member.role_global
-  editStatus.value  = member.status
-  editError.value   = null
+  editTarget.value    = member
+  editRole.value      = member.role_global
+  editStatus.value    = member.status
+  editJobTitle.value  = (member as any).job_title ?? ''
+  editError.value     = null
   showEditModal.value = true
 }
 
@@ -289,6 +308,10 @@ async function saveEdit() {
     }
     if (editStatus.value !== editTarget.value.status) {
       await updateStatus(editTarget.value.id, editStatus.value)
+    }
+    const currentJobTitle = (editTarget.value as any).job_title ?? ''
+    if (editJobTitle.value !== currentJobTitle) {
+      await updateJobTitle(editTarget.value.id, editJobTitle.value)
     }
     showEditModal.value = false
   } catch (e: any) {

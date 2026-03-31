@@ -52,6 +52,24 @@ export function useAuth() {
     }
   }
 
+  async function register(email: string, password: string, fullName: string): Promise<void> {
+    isLoading.value = true
+    try {
+      const sb = getClient()
+      const { data, error } = await sb.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { full_name: fullName }
+        }
+      })
+      if (error) throw error
+      if (data.user) await loadProfile(data.user.id)
+    } finally {
+      isLoading.value = false
+    }
+  }
+
   async function login(email: string, password: string): Promise<void> {
     isLoading.value = true
     try {
@@ -97,6 +115,7 @@ export function useAuth() {
     isMaster,
     isCollaborator,
     initSession,
+    register,
     login,
     logout,
     sendPasswordReset,

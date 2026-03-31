@@ -9,15 +9,7 @@
   >
     <!-- Logo -->
     <div class="flex items-center gap-3 px-4 h-14 border-b border-primary-600 shrink-0">
-      <div class="flex items-center justify-center w-8 h-8 bg-white/10 rounded-xl shrink-0">
-        <img src="/favicon.ico" alt="Qualitec" class="w-5 h-5 object-contain" />
-      </div>
-      <span
-        class="text-white font-semibold text-base whitespace-nowrap transition-opacity duration-[200ms]"
-        :class="isOpen ? 'opacity-100' : 'opacity-0'"
-      >
-        Qualitec
-      </span>
+      <img src="/images/logo_qualitec.png" alt="Qualitec" class="h-8 object-contain shrink-0" />
     </div>
 
     <!-- Nav -->
