@@ -1,0 +1,1925 @@
+Backlog detalhado
+Backlog detalhado — App Web de Gestão de Tarefas em Equipe estilo Kanban
+Fase 1 — Fundação do produto
+Épico 1.1 — Setup inicial do projeto
+Tarefa 1.1.1 ✅ — Criar projeto base Nuxt 4
+
+Descrição curta: Inicializar o projeto principal com estrutura padrão.
+
+Objetivo: Ter a base limpa para começar a componentização.
+
+Dependências: Nenhuma.
+
+Critério de aceite: Projeto inicia localmente sem erros.
+
+Prioridade: Alta.
+
+Tarefa 1.1.2 ✅ — Instalar Vue, Tailwind e dependências de UI
+
+Descrição curta: Configurar bibliotecas essenciais do frontend.
+
+Objetivo: Preparar a base visual e estrutural.
+
+Dependências: 1.1.1 ok=.
+
+Critério de aceite: Tailwind funcionando em páginas e componentes.
+
+Prioridade: Alta.
+
+Tarefa 1.1.3 ✅ — Definir tokens visuais da marca Qualitec
+
+Descrição curta: Mapear cores principais, neutras, feedback e superfícies.
+
+Objetivo: Garantir consistência visual do produto.
+
+Dependências: 1.1.2 ok=.
+
+Critério de aceite: Arquivo de tokens criado com cores, espaçamentos, radius e sombras.
+
+Prioridade: Alta.
+
+Tarefa 1.1.4 ✅ — Definir escala tipográfica estilo iOS web
+
+Descrição curta: Criar padrão de títulos, textos, labels e microtextos.
+
+Objetivo: Padronizar leitura e hierarquia visual.
+
+Dependências: 1.1.3 ok=.
+
+Critério de aceite: Guia de tipografia aplicado em pelo menos uma tela-base.
+
+Prioridade: Alta.
+
+Tarefa 1.1.5 ✅ — Criar layout base responsivo
+
+Descrição curta: Montar shell com header, sidebar e área principal.
+
+Objetivo: Reutilizar estrutura em todas as telas.
+
+Dependências: 1.1.4 ok=.
+
+Critério de aceite: Layout funciona em mobile, tablet e desktop.
+
+Prioridade: Alta.
+
+Épico 1.2 — Biblioteca de componentes
+Tarefa 1.2.1 ✅ — Criar componente Button
+
+Descrição curta: Criar botão primário, secundário, ghost e danger.
+
+Objetivo: Padronizar ações clicáveis.
+
+Dependências: 1.1.3.
+
+Critério de aceite: Variantes com estados hover, focus, disabled e loading.
+
+Prioridade: Alta.
+
+Tarefa 1.2.2 ✅ — Criar componente Input
+
+Descrição curta: Criar campo de texto reutilizável.
+
+Objetivo: Padronizar formulários.
+
+Dependências: 1.1.3.
+
+Critério de aceite: Campo com label, hint, erro e placeholder.
+
+Prioridade: Alta.
+
+Tarefa 1.2.3 ✅ — Criar componente Select
+
+Descrição curta: Criar seletor com lista simples.
+
+Objetivo: Reutilizar escolhas em formulários.
+
+Dependências: 1.2.2.
+
+Critério de aceite: Seleção por mouse e teclado funcionando.
+
+Prioridade: Alta.
+
+Tarefa 1.2.4 ✅ — Criar componente Modal
+
+Descrição curta: Criar modal padrão com overlay e fechamento seguro.
+
+Objetivo: Reutilizar criação e edição sem trocar de página.
+
+Dependências: 1.2.1.
+
+Critério de aceite: Modal fecha por botão e ESC.
+
+Prioridade: Alta.
+
+Tarefa 1.2.5 ✅ — Criar componente Drawer lateral
+
+Descrição curta: Criar painel lateral para edição rápida.
+
+Objetivo: Permitir edição contextual de tarefa e quadro.
+
+Dependências: 1.2.4.
+
+Critério de aceite: Drawer abre e fecha sem quebrar layout.
+
+Prioridade: Média.
+
+Tarefa 1.2.6 ✅ — Criar componentes de estado
+
+Descrição curta: Criar LoadingState, EmptyState e ErrorState.
+
+Objetivo: Padronizar feedback de sistema.
+
+Dependências: 1.2.1 ✅.
+
+Critério de aceite: Componentes reutilizáveis em diferentes módulos.
+
+Prioridade: Alta.
+
+Fase 2 — Dados, autenticação e permissões
+Épico 2.1 — Modelagem inicial no Supabase
+Tarefa 2.1.1 ✅ — Criar tabela organizations
+
+Descrição curta: Registrar a organização principal.
+
+Objetivo: Permitir multiestrutura futura sem retrabalho.
+
+Dependências: Nenhuma.
+
+Critério de aceite: Tabela criada com id, nome, slug, logo_url, created_at.
+
+Prioridade: Alta.
+
+Tarefa 2.1.2  ✅— Criar tabela profiles
+
+Descrição curta: Armazenar dados complementares do usuário.
+
+Objetivo: Separar autenticação de perfil.
+
+Dependências: 2.1.1 ✅.
+
+Critério de aceite: Tabela com id, organization_id, full_name, email, avatar_url, role_global, status, created_at.
+
+Prioridade: Alta.
+
+Tarefa 2.1.3 ✅ — Criar tabela user_managed_users
+
+Descrição curta: Relacionar masters aos membros específicos que podem administrar.
+
+Objetivo: Suportar regra de administração parcial.
+
+Dependências: 2.1.2 ✅.
+
+Critério de aceite: Tabela com master_user_id, managed_user_id, created_at.
+
+Prioridade: Alta.✅
+
+Tarefa 2.1.4 ✅ — Criar tabela workspaces
+
+Descrição curta: Cadastrar áreas de trabalho.
+
+Objetivo: Organizar boards por espaço.
+
+Dependências: 2.1.1 ✅.
+
+Critério de aceite: Tabela com id, organization_id, name, slug, visibility, created_by, created_at.
+
+Prioridade: Alta.
+
+Tarefa 2.1.5  ✅— Criar tabela boards
+
+Descrição curta: Cadastrar quadros.
+
+Objetivo: Suportar múltiplos fluxos de trabalho.
+
+Dependências: 2.1.4 ✅.
+
+Critério de aceite: Tabela com id, workspace_id, name, description, board_type, visibility, cover_color, created_by, created_at.
+
+Prioridade: Alta.
+
+Tarefa 2.1.6 ✅ — Criar tabela board_members
+
+Descrição curta: Registrar acesso de usuários aos quadros.
+
+Objetivo: Controlar permissões por board.
+
+Dependências: 2.1.5, 2.1.2.✅
+
+Critério de aceite: Tabela com board_id, user_id, access_role.
+
+Prioridade: Alta.
+
+Tarefa 2.1.7 ✅ — Criar tabela board_columns
+
+Descrição curta: Registrar colunas configuráveis do board.
+
+Objetivo: Permitir status, prioridade, prazo, notas e futuras colunas customizadas.
+
+Dependências: 2.1.5 ✅.
+
+Critério de aceite: Tabela com id, board_id, type, label, settings_json, sort_order.
+
+Prioridade: Alta.
+
+Tarefa 2.1.8 ✅ — Criar tabela task_groups
+
+Descrição curta: Registrar grupos como “Tarefas pendentes” e “Concluído”.
+
+Objetivo: Organizar tarefas dentro do quadro.
+
+Dependências: 2.1.5. ✅
+
+Critério de aceite: Tabela com id, board_id, name, color, sort_order, is_collapsed.
+
+Prioridade: Alta.
+
+Tarefa 2.1.9 ✅ — Criar tabela tasks
+
+Descrição curta: Registrar tarefas principais.
+
+Objetivo: Centralizar entidade principal do sistema.
+
+Dependências: 2.1.8 ✅.
+
+Critério de aceite: Tabela com id, board_id, group_id, title, description, status_id, priority_id, due_date, start_date, created_by, position, archived_at.
+
+Prioridade: Alta.
+
+Tarefa 2.1.10 ✅ — Criar tabela task_assignees
+
+Descrição curta: Registrar responsáveis por tarefa.
+
+Objetivo: Permitir um ou mais responsáveis.
+
+Dependências: 2.1.9, 2.1.2.
+
+Critério de aceite: Tabela com task_id, user_id, assigned_at.
+
+Prioridade: Alta.
+
+Tarefa 2.1.11✅ — Criar tabela subtasks
+
+Descrição curta: Registrar subtarefas.
+
+Objetivo: Quebrar trabalho em itens menores.
+
+Dependências: 2.1.9.
+
+Critério de aceite: Tabela com id, task_id, title, is_done, sort_order, created_at.
+
+Prioridade: Alta.
+
+Tarefa 2.1.12 ✅ — Criar tabela task_comments
+
+Descrição curta: Registrar notas e comentários.
+
+Objetivo: Permitir histórico de comunicação.
+
+Dependências: 2.1.9.
+
+Critério de aceite: Tabela com id, task_id, author_id, content, created_at, updated_at.
+
+Prioridade: Alta.
+
+Tarefa 2.1.13 ✅ — Criar tabela task_attachments
+
+Descrição curta: Registrar anexos.
+
+Objetivo: Associar arquivos às tarefas.
+
+Dependências: 2.1.9.
+
+Critério de aceite: Tabela com id, task_id, file_name, file_path, mime_type, size_bytes, uploaded_by, created_at.
+
+Prioridade: Alta.
+
+Tarefa 2.1.14 ✅ — Criar tabela labels
+
+Descrição curta: Registrar etiquetas do board.
+
+Objetivo: Permitir categorização adicional.
+
+Dependências: 2.1.5.
+
+Critério de aceite: Tabela com id, board_id, name, color.
+
+Prioridade: Média.
+
+Tarefa 2.1.15 ✅ — Criar tabela task_labels
+
+Descrição curta: Relacionar tarefas a etiquetas.
+
+Objetivo: Permitir filtros rápidos e organização visual.
+
+Dependências: 2.1.14, 2.1.9.
+
+Critério de aceite: Tabela criada e funcionando.
+
+Prioridade: Média.
+
+Tarefa 2.1.16 ✅ — Criar tabela saved_filters
+
+Descrição curta: Salvar filtros personalizados.
+
+Objetivo: Reproduzir recurso de pesquisas salvas.
+
+Dependências: 2.1.9, 2.1.2.
+
+Critério de aceite: Tabela com id, user_id, board_id, name, filter_json, created_at.
+
+Prioridade: Média.
+
+Tarefa 2.1.17 ✅ — Criar tabela board_views
+
+Descrição curta: Registrar visualizações salvas do board.
+
+Objetivo: Suportar Quadro, Kanban, Calendário, Timeline, Gantt, Cartões e Tabela.
+
+Dependências: 2.1.5.
+
+Critério de aceite: Tabela com id, board_id, view_type, name, settings_json, is_default.
+
+Prioridade: Alta.
+
+Tarefa 2.1.18 ✅ — Criar tabela automations
+
+Descrição curta: Registrar automações configuradas.
+
+Objetivo: Permitir regras futuras por evento.
+
+Dependências: 2.1.5.
+
+Critério de aceite: Tabela com id, board_id, trigger_type, action_type, config_json, is_active.
+
+Prioridade: Média.
+
+Tarefa 2.1.19 ✅ — Criar tabela activity_logs
+
+Descrição curta: Registrar ações importantes do sistema.
+
+Objetivo: Exibir histórico e auditoria básica.
+
+Dependências: 2.1.9.
+
+Critério de aceite: Tabela com actor_id, entity_type, entity_id, action, meta_json, created_at.
+
+Prioridade: Alta.
+
+Tarefa 2.1.20 ✅ — Criar tabela notifications
+
+Descrição curta: Registrar notificações internas.
+
+Objetivo: Alimentar inbox e alertas.
+
+Dependências: 2.1.19.
+
+Critério de aceite: Tabela com user_id, type, title, body, read_at, link.
+
+Prioridade: Média.
+
+Épico 2.2 — Autenticação e acesso
+Tarefa 2.2.1 ✅ — Configurar login por email e senha
+
+Descrição curta: Implementar autenticação principal.
+
+Objetivo: Liberar acesso seguro ao sistema.
+
+Dependências: 2.1.2.
+
+Critério de aceite: Usuário consegue entrar e sair.
+
+Prioridade: Alta.
+
+Tarefa 2.2.2 ✅ — Criar tela de login
+
+Descrição curta: Montar interface de acesso.
+
+Objetivo: Iniciar fluxo do usuário.
+
+Dependências: 2.2.1.
+
+Critério de aceite: Tela validando campos obrigatórios.
+
+Prioridade: Alta.
+
+Tarefa 2.2.3 ✅ — Criar fluxo de recuperação de senha
+
+Descrição curta: Permitir redefinição segura.
+
+Objetivo: Reduzir bloqueios de acesso.
+
+Dependências: 2.2.1.
+
+Critério de aceite: Email de recuperação enviado com sucesso.
+
+Prioridade: Alta.
+
+Tarefa 2.2.4 ✅ — Proteger rotas autenticadas
+
+Descrição curta: Restringir páginas internas.
+
+Objetivo: Evitar acesso indevido.
+
+Dependências: 2.2.1.
+
+Critério de aceite: Usuário não autenticado é redirecionado.
+
+Prioridade: Alta.
+
+Tarefa 2.2.5 ✅ — Implementar controle de perfil Master
+
+Descrição curta: Aplicar permissões globais totais.
+
+Objetivo: Garantir administração completa.
+
+Dependências: 2.2.4.
+
+Critério de aceite: Master acessa telas administrativas.
+
+Prioridade: Alta.
+
+Tarefa 2.2.6 ✅ — Implementar controle de perfil Colaborador
+
+Descrição curta: Restringir recursos não autorizados.
+
+Objetivo: Limitar acesso conforme papel.
+
+Dependências: 2.2.4.
+
+Critério de aceite: Colaborador não acessa ações restritas.
+
+Prioridade: Alta.
+
+Tarefa 2.2.7 ✅ — Implementar administração parcial de membros
+
+Descrição curta: Permitir que Master delegue administração de membros específicos.
+
+Objetivo: Suportar regra de gestão segmentada.
+
+Dependências: 2.1.3, 2.2.5.
+
+Critério de aceite: Master seleciona quais usuários outro membro poderá administrar.
+
+Prioridade: Alta.
+
+Tarefa 2.2.8 ✅ — Criar tela de gestão de membros
+
+Descrição curta: Exibir lista, níveis e vínculos de administração.
+
+Objetivo: Facilitar controle de acesso.
+
+Dependências: 2.2.7.
+
+Critério de aceite: Tela permite alterar perfil e relação de gestão.
+
+Prioridade: Alta.
+
+Fase 3 — Área de trabalho, navegação e boards
+Épico 3.1 — Navegação principal
+Tarefa 3.1.1 ✅ — Criar sidebar desktop
+
+Descrição curta: Exibir navegação principal lateral.
+
+Objetivo: Acessar home, meu trabalho, áreas e boards.
+
+Dependências: 1.1.5.
+
+Critério de aceite: Sidebar fixa funcional no desktop.
+
+Prioridade: Alta.
+
+Tarefa 3.1.2 ✅ — Criar navegação mobile
+
+Descrição curta: Adaptar navegação para telas pequenas.
+
+Objetivo: Garantir usabilidade mobile.
+
+Dependências: 3.1.1.
+
+Critério de aceite: Menu colapsável funcional em celular.
+
+Prioridade: Alta.
+
+Tarefa 3.1.3 ✅ — Criar seção de favoritos
+
+Descrição curta: Permitir destacar boards e dashboards.
+
+Objetivo: Acesso rápido a itens usados.
+
+Dependências: 3.1.1.
+
+Critério de aceite: Usuário consegue favoritar e desfavoritar.
+
+Prioridade: Média.
+
+Tarefa 3.1.4 ✅ — Criar seção de recentes
+
+Descrição curta: Exibir boards recentemente acessados.
+
+Objetivo: Melhorar retomada de contexto.
+
+Dependências: 3.1.1.
+
+Critério de aceite: Lista atualiza conforme navegação.
+
+Prioridade: Média.
+
+Tarefa 3.1.5 ✅ — Criar página “Meu trabalho”
+
+Descrição curta: Consolidar tarefas do usuário.
+
+Objetivo: Dar visão pessoal por quadro e calendário.
+
+Dependências: 2.1.9, 2.1.10.
+
+Critério de aceite: Página lista tarefas atribuídas ao usuário.
+
+Prioridade: Alta.
+
+Tarefa 3.1.6 ✅ — Criar visualização calendário em “Meu trabalho”
+
+Descrição curta: Exibir tarefas por data.
+
+Objetivo: Permitir leitura temporal individual.
+
+Dependências: 3.1.5.
+
+Critério de aceite: Tarefas aparecem nas datas corretas.
+
+Prioridade: Média.
+
+Épico 3.2 — ✅ Workspaces e boards
+Tarefa 3.2.1 ✅ — Criar tela de listagem de áreas de trabalho
+
+Descrição curta: Exibir workspaces existentes.
+
+Objetivo: Organizar acesso por contexto.
+
+Dependências: 2.1.4.
+
+Critério de aceite: Lista carregada com estados vazio e erro.
+
+Prioridade: Alta.
+
+Tarefa 3.2.2 ✅— Criar modal de nova área de trabalho
+
+Descrição curta: Permitir cadastro de workspace.
+
+Objetivo: Estruturar times e contextos.
+
+Dependências: 3.2.1.
+
+Critério de aceite: Workspace criado com sucesso.
+
+Prioridade: Alta.!
+
+Tarefa 3.2.3 ✅— — Criar quadro a partir de botão lateral
+
+Descrição curta: Implementar ação rápida de novo board.
+
+Objetivo: Reduzir atrito de criação.
+
+Dependências: 2.1.5.
+
+Critério de aceite: Board criado e exibido na navegação.
+
+Prioridade: Alta.
+
+Tarefa 3.2.4  ✅ — Criar formulário de novo board
+
+Descrição curta: Solicitar nome, descrição, tipo e visibilidade.
+
+Objetivo: Formalizar criação de quadro.
+
+Dependências: 3.2.3.
+
+Critério de aceite: Formulário valida campos mínimos.
+
+Prioridade: Alta.
+
+Tarefa 3.2.5  ✅ — Implementar board privado
+
+Descrição curta: Restringir visualização por membros convidados.
+
+Objetivo: Suportar recurso inspirado no monday Pro.
+
+Dependências: 2.1.5, 2.1.6.
+
+Critério de aceite: Apenas membros autorizados visualizam o quadro.
+
+Prioridade: Alta.
+
+
+
+Tarefa 3.2.6 ✅ — Implementar board público interno da organização
+
+Descrição curta: Permitir quadros visíveis à organização.
+
+Objetivo: Suportar descoberta interna controlada, semelhante a recursos organizacionais avançados.
+
+Dependências: 3.2.4.
+
+Critério de aceite: Quadro visível conforme nível configurado.
+
+Prioridade: Média.
+
+Tarefa 3.2.7 ✅ — Implementar convidados em board
+
+Descrição curta: Permitir acesso limitado de usuários externos ou internos convidados.
+
+Objetivo: Suportar colaboração pontual.
+
+Dependências: 2.1.6.
+
+Critério de aceite: Convidado acessa apenas board permitido.
+
+Prioridade: Média.
+
+Tarefa 3.2.8 ✅— Implementar observadores
+
+Descrição curta: Criar papel de visualização sem edição.
+
+Objetivo: Cobrir padrão de observers visto em comparativos do Trello.
+
+Dependências: 2.1.6.
+
+Critério de aceite: Observador consegue ver, mas não editar.
+
+Prioridade: Média.
+
+Tarefa 3.2.9 ✅ — Criar templates de boards
+
+Descrição curta: Permitir salvar board como modelo.
+
+Objetivo: Reutilizar estruturas recorrentes.
+
+Dependências: 3.2.4.
+
+Critério de aceite: Usuário cria novo board a partir de template.
+
+Prioridade: Média.
+
+Tarefa 3.2.10 ✅ — Criar coleções de boards
+
+Descrição curta: Agrupar boards por tema, cliente ou setor.
+
+Objetivo: Reproduzir padrão de board collections.
+
+Dependências: 3.2.1, 3.2.4.
+
+Critério de aceite: Coleção exibe boards associados.
+
+Prioridade: Baixa.
+
+
+
+
+Fase 4 — Estrutura interna do board
+Épico 4.1 ✅ — Grupos e colunas
+Tarefa 4.1.1 — Criar grupo padrão ao abrir novo board
+
+Descrição curta: Gerar primeiro agrupamento automaticamente.
+
+Objetivo: Reduzir passos iniciais.
+
+Dependências: 3.2.4.
+
+Critério de aceite: Todo novo board nasce com um grupo inicial.
+
+Prioridade: Alta.
+
+
+
+
+Tarefa 4.1.2 ✅ — Criar novo grupo manualmente
+
+Descrição curta: Adicionar grupo abaixo ou acima.
+
+Objetivo: Organizar tarefas por estágio ou contexto.
+
+Dependências: 4.1.1.
+
+Critério de aceite: Grupo criado com posição correta.
+
+Prioridade: Alta.
+
+
+Tarefa 4.1.3 ✅ — Renomear grupo
+
+Descrição curta: Editar título do grupo.
+
+Objetivo: Personalizar estrutura do quadro.
+
+Dependências: 4.1.2.
+
+Critério de aceite: Nome atualizado em tempo real.
+
+Prioridade: Alta.
+
+Tarefa 4.1.4  ✅ — Reordenar grupos
+
+Descrição curta: Mover grupo para nova posição.
+
+Objetivo: Reorganizar o board visualmente.
+
+Dependências: 4.1.2.
+
+Critério de aceite: Ordem persistida após refresh.
+
+Prioridade: Média.
+
+
+
+Tarefa 4.1.5 — ✅
+ Colapsar grupo
+
+Descrição curta: Ocultar conteúdo mantendo cabeçalho visível.
+
+Objetivo: Reduzir poluição visual.
+
+Dependências: 4.1.2.
+
+Critério de aceite: Grupo recolhe e expande corretamente.
+
+Prioridade: Média.
+
+
+
+Tarefa 4.1.6 — ✅ Exibir grupos vazios
+
+Descrição curta: Permitir mostrar ou ocultar grupos sem tarefas.
+
+Objetivo: Melhorar filtragem e leitura.
+
+Dependências: 4.1.5.
+
+Critério de aceite: Preferência aplicada sem quebrar lista.
+
+Prioridade: Baixa.
+
+
+
+Tarefa 4.1.7 ✅ — Criar coluna Responsável
+
+Descrição curta: Exibir responsáveis de forma padronizada.
+
+Objetivo: Permitir atribuição visível.
+
+Dependências: 2.1.7.
+
+Critério de aceite: Coluna renderiza avatar e estado vazio.
+
+Prioridade: Alta.
+---leia as steering antes de qualquer coisa ✅
+
+
+Tarefa 4.1.8 — Criar coluna Status  ✅
+
+Descrição curta: Exibir status por etiqueta colorida.
+
+Objetivo: Visualizar estágio da tarefa.
+
+Dependências: 2.1.7.
+
+Critério de aceite: Status aparece no board e editor.
+
+Prioridade: Alta.
+
+Tarefa 4.1.9 — Criar coluna Prazo ✅
+
+Descrição curta: Exibir data de entrega.
+
+Objetivo: Permitir acompanhamento temporal.
+
+Dependências: 2.1.7.
+
+Critério de aceite: Datas renderizadas com destaque para atraso.
+
+Prioridade: Alta.
+ 
+
+Tarefa 4.1.10 — Criar coluna Prioridade ✅
+
+Descrição curta: Exibir nível de urgência.
+
+Objetivo: Facilitar triagem visual.
+
+Dependências: 2.1.7.
+
+Critério de aceite: Prioridades com cores consistentes.
+
+Prioridade: Alta.
+
+Tarefa 4.1.11 — Criar coluna Notas ✅
+
+Descrição curta: Exibir resumo ou observação curta.
+
+Objetivo: Dar contexto rápido no board.
+
+Dependências: 2.1.7.
+
+Critério de aceite: Coluna mostra texto curto sem quebrar linha.
+
+Prioridade: Média.
+
+Tarefa 4.1.12 — Criar coluna Arquivos ✅
+
+Descrição curta: Exibir indicador de anexos.
+
+Objetivo: Sinalizar documentação associada.
+
+Dependências: 2.1.13.
+
+Critério de aceite: Ícone mostra quantidade ou presença de arquivo.
+
+Prioridade: Média.
+
+Tarefa 4.1.13 — Criar coluna Orçamento ✅
+
+Descrição curta: Exibir valor monetário simples.
+
+Objetivo: Cobrir cenário semelhante às capturas com coluna financeira.
+
+Dependências: 2.1.7.
+
+Critério de aceite: Valor salvo e formatado corretamente.
+
+Prioridade: Baixa.
+✅ ✅ ✅ ✅ ✅ ✅ ✅ ✅ ✅  
+Tarefa 4.1.14 — Criar coluna Última atualização
+
+Descrição curta: Mostrar quando a tarefa foi alterada.
+
+Objetivo: Facilitar leitura de atividade recente.
+
+Dependências: 2.1.19.
+
+Critério de aceite: Coluna exibe tempo relativo e data completa no hover.
+
+Prioridade: Média.
+
+Tarefa 4.1.15 — Criar coluna Cronograma
+
+Descrição curta: Exibir intervalo de datas.
+
+Objetivo: Alimentar Timeline, Gantt e Calendário.
+
+Dependências: 2.1.7.
+
+Critério de aceite: Intervalo salvo com início e fim.
+
+Prioridade: Alta.
+
+Tarefa 4.1.16 — Permitir ocultar colunas
+
+Descrição curta: Esconder colunas no board.
+
+Objetivo: Personalizar visualização.
+
+Dependências: 4.1.7 a 4.1.15.
+
+Critério de aceite: Usuário marca e desmarca colunas visíveis.
+
+Prioridade: Média.
+
+Tarefa 4.1.17 — Permitir reordenar colunas
+
+Descrição curta: Alterar ordem horizontal das colunas.
+
+Objetivo: Deixar board mais adaptável.
+
+Dependências: 4.1.16.
+
+Critério de aceite: Ordem persistida por board/view.
+
+Prioridade: Média.
+
+Fase 5 — Tarefas e subtarefas
+Épico 5.1 — CRUD de tarefas
+Tarefa 5.1.1 — Criar botão “Criar tarefa”
+
+Descrição curta: Inserir ação principal do board.
+
+Objetivo: Facilitar inclusão de itens.
+
+Dependências: 4.1.1.
+
+Critério de aceite: Botão abre criação rápida.
+
+Prioridade: Alta.
+
+Tarefa 5.1.2 — Criar input de nova tarefa inline
+
+Descrição curta: Adicionar tarefa sem sair da lista.
+
+Objetivo: Reduzir atrito operacional.
+
+Dependências: 5.1.1.
+
+Critério de aceite: Enter salva tarefa no grupo correto.
+
+Prioridade: Alta.
+
+Tarefa 5.1.3 — Criar modal completo de tarefa
+
+Descrição curta: Abrir edição detalhada.
+
+Objetivo: Centralizar dados da tarefa.
+
+Dependências: 5.1.2.
+
+Critério de aceite: Modal exibe todos os campos principais.
+
+Prioridade: Alta.
+
+Tarefa 5.1.4 — Editar título da tarefa inline
+
+Descrição curta: Permitir edição rápida no board.
+
+Objetivo: Acelerar ajustes simples.
+
+Dependências: 5.1.2.
+
+Critério de aceite: Clique edita e salva sem recarregar.
+
+Prioridade: Alta.
+
+Tarefa 5.1.5 — Excluir tarefa com confirmação
+
+Descrição curta: Remover item com segurança.
+
+Objetivo: Evitar perda acidental.
+
+Dependências: 5.1.3.
+
+Critério de aceite: Confirmação obrigatória antes da exclusão.
+
+Prioridade: Alta.
+
+Tarefa 5.1.6 — Arquivar tarefa
+
+Descrição curta: Retirar da lista sem apagar permanentemente.
+
+Objetivo: Preservar histórico.
+
+Dependências: 5.1.5.
+
+Critério de aceite: Tarefa some do board e pode ser recuperada.
+
+Prioridade: Média.
+
+Épico 5.2 — Campos de tarefa
+Tarefa 5.2.1 — Editar status da tarefa
+
+Descrição curta: Alterar estágio pelo board.
+
+Objetivo: Atualizar andamento com poucos cliques.
+
+Dependências: 4.1.8.
+
+Critério de aceite: Dropdown salva status corretamente.
+
+Prioridade: Alta.
+
+Tarefa 5.2.2 — Editar prioridade da tarefa
+
+Descrição curta: Alterar urgência pelo board.
+
+Objetivo: Facilitar triagem operacional.
+
+Dependências: 4.1.10.
+
+Critério de aceite: Prioridade persistida imediatamente.
+
+Prioridade: Alta.
+
+Tarefa 5.2.3 — Editar prazo da tarefa
+
+Descrição curta: Selecionar data limite.
+
+Objetivo: Alimentar alertas e visões temporais.
+
+Dependências: 4.1.9.
+
+Critério de aceite: Data salva e refletida em views.
+
+Prioridade: Alta.
+
+Tarefa 5.2.4 — Editar cronograma da tarefa
+
+Descrição curta: Selecionar início e fim.
+
+Objetivo: Habilitar timeline e Gantt.
+
+Dependências: 4.1.15.
+
+Critério de aceite: Datas válidas e consistentes.
+
+Prioridade: Alta.
+
+Tarefa 5.2.5 — Atribuir responsável
+
+Descrição curta: Selecionar um usuário para a tarefa.
+
+Objetivo: Definir dono claro da entrega.
+
+Dependências: 4.1.7.
+
+Critério de aceite: Avatar aparece após seleção.
+
+Prioridade: Alta.
+
+Tarefa 5.2.6 — Atribuir múltiplos responsáveis
+
+Descrição curta: Permitir mais de um usuário.
+
+Objetivo: Suportar trabalho compartilhado.
+
+Dependências: 5.2.5.
+
+Critério de aceite: Múltiplos avatares exibidos sem quebrar layout.
+
+Prioridade: Média.
+
+Tarefa 5.2.7 — Editar nota resumida
+
+Descrição curta: Registrar observação curta diretamente no board.
+
+Objetivo: Dar contexto sem abrir modal.
+
+Dependências: 4.1.11.
+
+Critério de aceite: Campo salva texto curto com limite definido.
+
+Prioridade: Média.
+
+Tarefa 5.2.8 — Enviar arquivo para tarefa
+
+Descrição curta: Subir anexo vinculado.
+
+Objetivo: Centralizar documentos de apoio.
+
+Dependências: 4.1.12.
+
+Critério de aceite: Upload concluído e arquivo listado.
+
+Prioridade: Alta.
+
+Tarefa 5.2.9 — Remover arquivo da tarefa
+
+Descrição curta: Excluir anexo com confirmação.
+
+Objetivo: Manter dados organizados.
+
+Dependências: 5.2.8.
+
+Critério de aceite: Arquivo removido do storage e da interface.
+
+Prioridade: Média.
+
+Tarefa 5.2.10 — Criar subtarefa
+
+Descrição curta: Adicionar item dependente dentro da tarefa.
+
+Objetivo: Quebrar entregas em partes pequenas.
+
+Dependências: 2.1.11, 5.1.3.
+
+Critério de aceite: Subtarefa criada no modal.
+
+Prioridade: Alta.
+
+Tarefa 5.2.11 — Marcar subtarefa como concluída
+
+Descrição curta: Atualizar progresso interno.
+
+Objetivo: Medir avanço granular.
+
+Dependências: 5.2.10.
+
+Critério de aceite: Checkbox altera estado e salva.
+
+Prioridade: Alta.
+
+Tarefa 5.2.12 — Reordenar subtarefas
+
+Descrição curta: Alterar sequência manualmente.
+
+Objetivo: Organizar execução.
+
+Dependências: 5.2.10.
+
+Critério de aceite: Ordem persistida.
+
+Prioridade: Média.
+
+Tarefa 5.2.13 — Adicionar etiquetas à tarefa
+
+Descrição curta: Relacionar labels coloridas.
+
+Objetivo: Facilitar filtros e leitura.
+
+Dependências: 2.1.14, 2.1.15.
+
+Critério de aceite: Etiquetas aparecem na tarefa e filtros.
+
+Prioridade: Média.
+
+Fase 6 — Interações avançadas do board
+Épico 6.1 — Drag and drop e manipulação
+Tarefa 6.1.1 — Arrastar tarefa dentro do mesmo grupo
+
+Descrição curta: Reordenar tarefa por drag and drop.
+
+Objetivo: Ajustar prioridade visual.
+
+Dependências: 5.1.2.
+
+Critério de aceite: Nova ordem é persistida.
+
+Prioridade: Alta.
+
+Tarefa 6.1.2 — Arrastar tarefa entre grupos
+
+Descrição curta: Mover item de um grupo para outro.
+
+Objetivo: Atualizar fluxo visualmente.
+
+Dependências: 6.1.1.
+
+Critério de aceite: Grupo da tarefa é atualizado após soltura.
+
+Prioridade: Alta.
+
+Tarefa 6.1.3 — Aplicar feedback visual ao arrastar
+
+Descrição curta: Exibir sombra, placeholder e área alvo.
+
+Objetivo: Melhorar previsibilidade da interação.
+
+Dependências: 6.1.1.
+
+Critério de aceite: Interface destaca origem e destino.
+
+Prioridade: Média.
+
+Tarefa 6.1.4 — Suportar drag and drop em touch
+
+Descrição curta: Adaptar gesto para tablet e celular.
+
+Objetivo: Garantir usabilidade responsiva.
+
+Dependências: 6.1.1.
+
+Critério de aceite: Movimento funciona em dispositivos touch.
+
+Prioridade: Média.
+
+
+Você tem razão! Pulei a Fase 7: Responsividade Completa. Aqui está completa:
+
+Fase 7: Responsividade Completa
+Épico 7.1: Mobile First (< 640px)
+Tarefa 7.1.1: Mobile Header Adaptativo
+Título: Header touch-friendly mobile
+
+Descrição: Navegação otimizada celular
+
+Objetivo: UX nativa app mobile
+
+Dependências: Tarefa 1.2.3
+
+Critério de Aceite:
+
+Hamburguer icon 44px touch target
+
+Menu lateral slide-in 80% width
+
+Boards como lista vertical full-height
+
+Swipe right fecha menu
+
+Back button tasks (iOS style)
+
+Status bar awareness (env(safe-area-inset-top))
+
+Prioridade: P1 - Alta
+
+Tarefa 7.1.2: Kanban Mobile - Stack Vertical
+Título: Colunas empilhadas mobile
+
+Descrição: Scroll vertical colunas
+
+Objetivo: Navegação intuitiva celular
+
+Dependências: Tarefa 3.1.3
+
+Critério de Aceite:
+
+Colunas cards 100% width
+
+Tabs "Coluna 1 | Coluna 2 | ..." header fixo
+
+Swipe left/right troca coluna
+
+Task cards full-width 48px height min
+
+Pull-to-refresh boards
+
+Prioridade: P1 - Alta
+
+Tarefa 7.1.3: Task Modal Mobile Fullscreen
+Título: Modal ocupa tela toda celular
+
+Descrição: Editor task nativo mobile
+
+Dependências: Tarefa 4.1.1
+
+Critério de Aceite:
+
+height: 100vh - env(safe-area-inset-bottom)
+
+Toolbar inferior fixo (Save/Delete)
+
+Scroll interno com bounce
+
+Keyboard avoidance auto
+
+Swipe down fecha (50% altura)
+
+Prioridade: P1 - Alta
+
+Tarefa 7.1.4: Touch Drag & Drop Mobile
+Título: Gestos nativos celular
+
+Critério de Aceite:
+
+Long press (500ms) inicia drag
+
+Haptic feedback drag start
+
+Visual handle finger-size (32px)
+
+Drop zones touch-friendly
+
+Double-tap task abre modal
+
+Prioridade: P1 - Alta
+
+Épico 7.2: Tablet Layout (641px - 1024px)
+Tarefa 7.2.1: Sidebar Colapsível Tablet
+Título: Navegação híbrida tablet
+
+Descrição: Sidebar auto-oculta
+
+Objetivo: Maximiza área trabalho
+
+Dependências: Tarefa 7.1.1
+
+Critério de Aceite:
+
+Sidebar 240px fixa OR colapsada 64px
+
+Hover expande colapsada
+
+Boards icons + tooltip
+
+Threshold 768px toggle
+
+Prioridade: P2 - Média
+
+Tarefa 7.2.2: 2 Colunas Paralelas Tablet
+Título: Kanban lado a lado
+
+Critério de Aceite:
+
+Max 2 colunas visíveis simultâneas
+
+Scroll horizontal remaining colunas
+
+Task cards 280px width max
+
+Modal 70% width centered
+
+Prioridade: P2 - Média
+
+Épico 7.3: Desktop e Large Screen (>1025px)
+Tarefa 7.3.1: Desktop Layout Completo
+Título: 3+ colunas desktop
+
+Descrição: Experiência Monday.com
+
+Dependências: Tarefa 3.1.3
+
+Critério de Aceite:
+
+Sidebar 320px fixa
+
+Colunas flex-grow min 300px
+
+Task cards grid 2xN quando muita altura
+
+Filters bar sticky top
+
+Prioridade: P1 - Alta
+
+Tarefa 7.3.2: Large Screen (>1440px) Otimização
+Título: Max-width container + spacing
+
+Critério de Aceite:
+
+Container max-width 1600px centered
+
+Padding sides 32px
+
+Colunas min-width 350px
+
+Dashboard cards grid responsivo
+
+Prioridade: P2 - Média
+
+Tarefa 7.3.3: Print Styles CSS
+Título: Impressão board otimizada
+
+Critério de Aceite:
+
+@media print landscape
+
+Remove sidebar/filters
+
+Tasks grid full page
+
+Colors grayscale preservado
+
+Prioridade: P3 - Baixa
+
+Épico 7.4: Breakpoint Testing Suite
+Tarefa 7.4.1: Device Frame Composable
+Título: Debug responsivo no-code
+
+Critério de Aceite:
+
+Toggle breakpoints DevTools
+
+Device frames: iPhone14, iPad, Macbook
+
+Screenshot cada breakpoint
+
+Performance metrics por device
+
+Prioridade: P2 - Média
+
+Tarefa 7.4.2: Lighthouse Responsivo Score
+Título: Validação automatizada
+
+Critério de Aceite:
+
+Lighthouse 95+ Mobile/Desktop
+
+Cumulative Layout Shift < 0.1
+
+Largest Contentful Paint < 2.5s
+
+Script automatizado CI
+
+Prioridade: P1 - Alta
+
+
+Fase 8: Estados Especiais e Feedback Visual
+Épico 8.1: Empty States e Loading
+Tarefa 8.1.1: Empty Board State Completo
+Título: Ilustração + CTA primeiro board
+
+Descrição: Tela motivacional quando sem boards
+
+Objetivo: Guiar usuário iniciante
+
+Dependências: Tarefa 2.1.3
+
+Critério de Aceite:
+
+SVG custom Qualitec ou Unsplash
+
+Título "Comece organizando seu time"
+
+Subtítulo explicativo 2 linhas
+
+Button "Novo Board" destacado
+
+Centrado perfeitamente mobile/desktop
+
+Fade-in animação
+
+Prioridade: P2 - Média
+
+Tarefa 8.1.2: Empty Column State Interativo
+Título: Drop zone visual para colunas vazias
+
+Descrição: Feedback quando coluna sem tasks
+
+Objetivo: Incentivar drag & drop
+
+Dependências: Tarefa 3.1.4
+
+Critério de Aceite:
+
+Border dashed 2px animado
+
+Texto "Arraste cards aqui 👆"
+
+Icon drag sutil no centro
+
+Hover: escala 1.02 + sombra
+
+Drag over: bg verde claro
+
+Prioridade: P2 - Média
+
+Tarefa 8.1.3: Skeleton Screens Otimizados
+Título: 5 skeletons específicos
+
+Descrição: Loading animado por contexto
+
+Objetivo: UX fluida durante fetch
+
+Dependências: Todas tarefas de layout base
+
+Critério de Aceite:
+
+Skeleton board list (sidebar)
+
+Skeleton board principal (3 colunas)
+
+Skeleton task modal
+
+Skeleton dashboard cards
+
+Skeleton lista membros
+
+Pulso suave 1.5s infinite
+
+Transição perfeita para conteúdo
+
+Prioridade: P1 - Alta
+
+Tarefa 8.1.4: Error Boundaries Globais
+Título: Tratamento erros com retry
+
+Descrição: Vue ErrorBoundary + Sentry
+
+Objetivo: App nunca quebra
+
+Dependências: Tarefa 1.1.1
+
+Critério de Aceite:
+
+ErrorBoundary composable global
+
+3 estados: loading/error/success
+
+Error card: msg + "Tentar novamente"
+
+Log Sentry com contexto board/user
+
+Offline detection + reconnect
+
+Prioridade: P1 - Alta
+
+Épico 8.2: Feedback Visual e Toasts
+Tarefa 8.2.1: Sistema Toast Global
+Título: Nuxt UI Toast ou custom
+
+Descrição: Notificações corner posicionadas
+
+Objetivo: Feedback imediato de ações
+
+Dependências: Tarefa 1.1.2
+
+Critério de Aceite:
+
+4 tipos: success/warning/error/info
+
+Auto-dismiss 4s
+
+Stack vertical max 3
+
+Mobile: full-width bottom
+
+Swipe dismiss touch
+
+Queue quando múltiplos
+
+Prioridade: P1 - Alta
+
+Tarefa 8.2.2: Micro-interações Task Card
+Título: Animações hover e seleção
+
+Descrição: Feedback tátil visual
+
+Objetivo: Sensação premium iOS
+
+Dependências: Tarefa 3.2.1
+
+Critério de Aceite:
+
+Hover: scale 1.02 + shadow-md
+
+Click: ripple effect centro
+
+Drag start: rotate 2deg
+
+Success move: bounce + confetti sutil
+
+60fps todas animações
+
+Prioridade: P2 - Média
+
+Tarefa 8.2.3: Progress Indicators
+Título: Spinners e progress bars
+
+Descrição: Loading contextualizado
+
+Objetivo: Usuário sabe o que está acontecendo
+
+Critério de Aceite:
+
+Spinner pequeno (16px) ações rápidas
+
+Spinner grande (48px) modais
+
+Linear progress save/edit
+
+Text overlay "Salvando..."
+
+Tailwind spinner customizado
+
+Prioridade: P1 - Alta
+
+Fase 9: Permissões e Gerenciamento de Membros
+Épico 9.1: Sistema de Roles Granular
+Tarefa 9.1.1: Tabela board_permissions expandida
+text
+board_permissions (
+  id: uuid (PK),
+  board_id: uuid REFERENCES boards,
+  user_id: uuid REFERENCES users,
+  role: text CHECK ('admin' | 'editor' | 'viewer'),
+  can_manage_members: boolean DEFAULT false,
+  can_delete_tasks: boolean DEFAULT false,
+  can_edit_columns: boolean DEFAULT false,
+  created_at: timestamptz
+)
+Prioridade: P0 - Crítica
+
+Tarefa 9.1.2: Modal Gerenciar Membros
+Título: Settings board → Membros
+
+Descrição: Lista + invite + roles
+
+Objetivo: Masters controlam acesso
+
+Dependências: Tarefa 2.1.2, 9.1.1
+
+Critério de Aceite:
+
+Tab "Membros" no board settings
+
+Lista: avatar/nome/role/buttons
+
+Search + invite por email
+
+Toggle granular permissions
+
+Remove member confirmation
+
+Apenas master vê este modal
+
+Prioridade: P2 - Média
+
+Tarefa 9.1.3: Permission Guards nos Composable
+Título: usePermissions() hook
+
+Descrição: Verificações centralizadas
+
+Objetivo: Segurança consistente
+
+Dependências: Tarefa 9.1.1
+
+Critério de Aceite:
+
+Composables: useCanDelete(), useCanManage()
+
+Loading state durante fetch perms
+
+Fallback UI quando sem permissão
+
+Toast "Sem permissão"
+
+Prioridade: P1 - Alta
+
+Tarefa 9.1.4: Visual Indicators de Role
+Título: Badges role no header/avatar
+
+Descrição: Admin badge sutil
+
+Critério de Aceite:
+
+Crown icon admins (12px)
+
+Tooltip "Administrador"
+
+Colorido apenas master
+
+Presente: header + task owner + membros
+
+Prioridade: P3 - Baixa
+
+Fase 10: Subtarefas e Anexos
+Épico 10.1: Subtarefas (Subitems)
+Tarefa 10.1.1: Tabela subtasks
+text
+subtasks (
+  id: uuid (PK),
+  task_id: uuid REFERENCES tasks,
+  titulo: text,
+  concluida: boolean DEFAULT false,
+  ordem: integer,
+  created_at: timestamptz
+)
+Prioridade: P0
+
+Tarefa 10.1.2: Toggle Subtarefas no Modal
+Título: Seção "Subitens" expansível
+
+Descrição: Lista checkbox tasks filhas
+
+Objetivo: Hierarquia tasks
+
+Dependências: Tarefa 4.1.1, 10.1.1
+
+Critério de Aceite:
+
+Accordion "Subitens (2/5)"
+
+Input + button "Adicionar subitem"
+
+Drag reorder subtasks
+
+% completude task pai
+
+Badge contador task card
+
+Prioridade: P2 - Média
+
+Tarefa 10.1.3: Inline Editing Subtasks
+Título: Editar subtasks sem modal
+
+Critério de Aceite:
+
+Click texto → input inline
+
+Checkbox toggle instantâneo
+
+Keyboard shortcuts (Enter/Esc)
+
+Sync realtime outros usuários
+
+Prioridade: P2 - Média
+
+Épico 10.2: Upload de Arquivos
+Tarefa 10.2.1: Tabela task_files
+text
+task_files (
+  id: uuid (PK),
+  task_id: uuid REFERENCES tasks,
+  nome: text,
+  url: text,
+  tamanho: integer,
+  tipo: text,
+  uploaded_by: uuid REFERENCES users,
+  created_at: timestamptz
+)
+Prioridade: P0
+
+Tarefa 10.2.2: Upload Area no Modal Task
+Título: Drag area + click upload
+
+Descrição: Supabase Storage integration
+
+Objetivo: Anexos por task
+
+Dependências: Tarefa 4.1.1
+
+Critério de Aceite:
+
+Seção "Arquivos" com drag zone
+
+Preview imagens thumbnails
+
+Progress bar upload
+
+Max 10MB/file
+
+Lista downloads com ícones
+
+Delete permission check
+
+Prioridade: P2 - Média
+
+Fase 11: Drag & Drop Avançado
+Épico 11.1: DND Multi-Elemento
+Tarefa 11.1.1: Reorder Dentro da Mesma Coluna
+Título: Drag vertical tasks mesma coluna
+
+Descrição: Ordenação por prioridade
+
+Dependências: Tarefa 3.2.3
+
+Critério de Aceite:
+
+Update campo ordem Supabase
+
+Placeholder durante drag
+
+Smooth animation 300ms
+
+Keyboard arrow up/down
+
+Prioridade: P2 - Média
+
+Tarefa 11.1.2: Multi-Select Tasks
+Título: Seleção múltipla + bulk actions
+
+Critério de Aceite:
+
+Cmd/Ctrl + click múltiplas
+
+Shift range select
+
+Toolbar bulk: mover/delete
+
+Visual highlight selecionadas
+
+Prioridade: P3 - Baixa
+
+Tarefa 11.1.3: Column Reorder
+Título: Drag headers colunas
+
+Critério de Aceite:
+
+Drag handle no header coluna
+
+Update ordem columns table
+
+Placeholder largura full-height
+
+Snap to grid 20px
+
+Prioridade: P3 - Baixa
+
+Fase 12: Acessibilidade e PWA
+Épico 12.1: A11y Básico
+Tarefa 12.1.1: ARIA Labels Completos
+Título: Labels screen readers todas interações
+
+Critério de Aceite:
+
+aria-label todos buttons/icons
+
+aria-expanded accordions/modals
+
+aria-live toasts/alerts
+
+Lighthouse Accessibility 95+
+
+Prioridade: P2 - Média
+
+Tarefa 12.1.2: Keyboard Navigation
+Título: Tab + Enter/Esc full app
+
+Critério de Aceite:
+
+Focus management modals
+
+Keyboard drag (arrow keys)
+
+Skip links principais seções
+
+Focus visible styles custom
+
+Prioridade: P2 - Média
+
+Épico 12.2: PWA Features
+Tarefa 12.2.1: Manifest e Service Worker
+Título: Instalar como app mobile
+
+Critério de Aceite:
+
+manifest.json Qualitec theme
+
+PWA icons todos tamanhos
+
+Service worker cache-first
+
+Offline board list
+
+Prioridade: P3 - Baixa
+
+Fase 13: Testes Manuais por Etapa
+Épico 13.1: Checklist Testes Cada Sprint
+Tarefa 13.1.1: Test Suite Mobile (320px)
+text
+□ Login responsivo
+□ Drag horizontal colunas
+□ Task modal full-height
+□ Hamburguer menu
+□ Touch feedback
+Prioridade: P1
+
+Tarefa 13.1.2: Test Suite Permissions
+text
+□ Master vê tudo
+□ Viewer só lê
+□ Editor não deleta
+□ Non-member 404
+□ Permission change realtime
+Prioridade: P1
+
+Tarefa 13.1.3: Test Suite Performance
+text
+□ < 2s page load
+□ 60fps scroll/drag
+□ Bundle < 1MB gzip
+□ Lighthouse 90+ todas métricas
+Prioridade: P1
+
+Tarefa 13.1.4: Test Edge Cases
+text
+□ 1000+ tasks performance
+□ Offline mode salva draft
+□ Concurrent edits conflito
+□ Import/export JSON backup
+Prioridade: P2
+
+Fase 14: Relatórios Avançados
+Épico 14.1: Export e Analytics
+Tarefa 14.1.1: Tabela activity_log
+text
+activity_log (
+  id: uuid (PK),
+  board_id: uuid,
+  user_id: uuid,
+  action: text,
+  entity_id: uuid,
+  entity_type: text,
+  created_at: timestamptz
+)
+Prioridade: P0
+
+Tarefa 14.1.2: Export CSV/JSON Board
+Título: Download dados completos
+
+Critério de Aceite:
+
+Button "Exportar board"
+
+CSV: tasks, columns, members
+
+JSON estruturado backup
+
+Filename board-nome-YYYYMMDD
+
+Prioridade: P3
+
+Tarefa 14.1.3: Relatório Velocity
+Título: Gráfico tasks concluídas/semana
+
+Critério de Aceite:
+
+Line chart 12 semanas
+
+Forecast trend line
+
+Filter por board/member
+
+Export PNG
+
+Prioridade: P3
+
+Resumo Execução
+Fase	Tarefas	Prioridade	Est. Horas
+Fase	Tarefas	Prioridade	Est. Horas
+1 Setup/Auth	8	P0/P1	24h
+2 Boards	6	P1	18h
+3 Kanban Core	8	P1	32h
+4 Task Editor	6	P1/P2	24h
+5 Filters	5	P2	20h
+6 Dashboards	3	P2/P3	12h
+7 Responsivo	3	P1/P2	12h
+8 Feedback	7	P1/P2	24h
+9 Permissions	4	P1/P2	16h
+10 Subtasks/Files	5	P2	20h
+11 Drag Avançado	3	P2/P3	12h
+12 A11y/PWA	4	P2/P3	12h
+13 Testes	4	P1/P2	16h
+14 Relatórios	3	P3	12h

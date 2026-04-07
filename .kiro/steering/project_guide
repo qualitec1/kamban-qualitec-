@@ -164,8 +164,229 @@ então o agente deve verificar se todas as partes estão amarradas de forma expl
 **Se o vínculo não estiver claro, a tarefa não pode ser considerada concluída.**
 
 ---
+# Regra obrigatória de contrato canônico entre banco, API e backend
 
-# 5) Regra de consistência de estado
+Esta regra é obrigatória para qualquer alteração que envolva banco de dados, rotas de API, DTOs, schemas, queries, services, validações, tipagens e integrações internas.
+
+## 5) Banco de dados é a fonte canônica dos nomes estruturais
+
+Ao trabalhar com entidades persistidas, o agente deve considerar o banco de dados existente como fonte de verdade para:
+
+- nome exato de tabelas;
+- nome exato de colunas;
+- tipos reais de cada campo;
+- chaves primárias;
+- chaves estrangeiras;
+- índices;
+- constraints;
+- nomes de relacionamentos;
+- nulabilidade;
+- valores default;
+- enums e domínios de valor.
+
+O agente nunca deve inventar, adaptar, “normalizar por conta própria” ou traduzir nomes de tabelas e colunas sem validar a estrutura real já existente.
+
+Se no banco existe `funcionarios_id`, o agente não pode criar:
+- `id_funcionarios`
+- `employee_id`
+- `funcionarioId`
+- `idFuncionario`
+
+como substituição estrutural da coluna real.
+
+Esses formatos só podem existir em camada de mapeamento explícita, quando houver necessidade real e documentada, sem alterar o contrato real do banco.
+
+## 6) É proibido criar nomes paralelos para a mesma entidade
+
+O agente não pode criar duplicidade semântica entre banco, backend e API.
+
+Exemplos de erro grave:
+- tabela `funcionarios` e API assumindo entidade `employees`;
+- coluna `funcionarios_id` no banco e backend usando `id_funcionarios` como se fosse equivalente;
+- campo `created_at` no banco e service gravando `data_criacao` sem mapeamento explícito;
+- relacionamento definido por `empresa_id` no banco, mas endpoint esperando `id_empresa` ou `companyId` sem contrato de transformação.
+
+Para a mesma entidade e o mesmo vínculo, deve existir um único contrato canônico.
+Se houver transformação entre camadas, ela deve ser:
+- explícita;
+- tipada;
+- centralizada;
+- documentada;
+- bidirecional quando necessário;
+- testável.
+
+## 7) Antes de criar nova tabela, coluna, relação ou endpoint, validar reaproveitamento
+
+Antes de criar qualquer nova estrutura, o agente deve verificar explicitamente:
+
+- se a tabela já existe com outro nome;
+- se a coluna já existe com semântica equivalente;
+- se já existe relacionamento modelado para aquele caso;
+- se já existe endpoint ou service cobrindo a operação;
+- se a necessidade é criação real ou apenas ajuste no contrato existente.
+
+É proibido criar tabela, coluna, rota ou service novo sem antes validar que não existe estrutura equivalente no projeto ou no banco.
+
+## 8) Toda API deve refletir fielmente o contrato de persistência
+
+Toda API que lê ou grava dados deve ser compatível com:
+
+- nomes corretos das entidades persistidas;
+- tipos corretos dos campos;
+- obrigatoriedade real de cada campo;
+- relacionamento correto entre tabelas;
+- regras reais de update, insert, delete e select;
+- constraints existentes no banco.
+
+O agente não pode expor um contrato na API que não corresponda ao modelo persistido, exceto quando houver uma camada de adaptação formal.
+
+Se houver adaptação entre payload externo e estrutura interna, o agente deve criar:
+- schema de validação;
+- tipos explícitos;
+- função de transformação de entrada;
+- função de transformação de saída;
+- cobertura de erro para inconsistência de contrato.
+
+## 9) Toda camada deve usar o mesmo vocabulário estrutural
+
+Ao alterar backend e API, o agente deve conferir consistência entre:
+
+- nome da tabela;
+- nome da coluna;
+- nome do campo no select;
+- nome do campo no insert/update;
+- nome do campo no DTO;
+- nome do campo no schema de validação;
+- nome do campo nos types compartilhados;
+- nome do campo usado no frontend;
+- nome do parâmetro de rota;
+- nome do filtro e ordenação.
+
+Se houver diferença entre camadas, o agente deve provar que:
+- a transformação é intencional;
+- não cria ambiguidade;
+- não quebra leitura;
+- não quebra escrita;
+- não quebra filtros;
+- não quebra joins;
+- não quebra histórico;
+- não quebra evolução futura.
+
+## 10) Chaves estrangeiras e relacionamentos devem manter padrão único
+
+Toda FK deve seguir exatamente o padrão já adotado no banco real.
+
+Se a convenção existente no banco for `funcionarios_id`, o agente deve reutilizar exatamente `funcionarios_id`.
+Se a convenção existente for `funcionario_id`, deve reutilizar exatamente `funcionario_id`.
+
+O agente não pode misturar padrões dentro do mesmo sistema, como:
+- `empresa_id`
+- `id_cliente`
+- `funcionarios_id`
+- `userId`
+
+para entidades equivalentes, sem uma regra formal já definida e validada.
+
+Mistura de convenções é falha estrutural, porque gera:
+- query incorreta;
+- join incorreto;
+- mapping inconsistente;
+- tipagem divergente;
+- bugs silenciosos em filtros e relacionamentos;
+- dificuldade de manutenção futura.
+
+## 11) Tipos de dados nunca devem ser presumidos
+
+O agente nunca deve assumir tipos com base apenas no nome do campo.
+
+Antes de usar qualquer campo em API ou backend, deve validar:
+- tipo real no banco;
+- se aceita `null`;
+- se possui default;
+- se é enum;
+- se é UUID, integer, bigint, numeric, boolean, text, timestamp, json, etc.;
+- se exige casting;
+- se existe constraint ou trigger relacionada.
+
+É proibido tratar um campo como string, number, boolean ou date sem checagem da definição real da coluna.
+
+## 12) Mudanças estruturais exigem propagação completa
+
+Qualquer alteração em tabela, coluna, tipo, relação ou constraint exige revisão obrigatória de:
+
+- migrations;
+- models ou tipos compartilhados;
+- DTOs;
+- schemas de validação;
+- repositories/services;
+- rotas de API;
+- queries SQL;
+- selects com alias;
+- inserts e updates;
+- joins;
+- filtros;
+- ordenação;
+- paginação;
+- telas de listagem;
+- telas de detalhe;
+- formulários;
+- edição;
+- histórico;
+- permissões;
+- RLS, policies e regras de segurança;
+- testes existentes;
+- seeds ou backfills, se necessário.
+
+A alteração não pode ser considerada concluída enquanto toda a cadeia afetada não estiver coerente.
+
+## 13) Proibição de alias implícito e “correção por adivinhação”
+
+O agente não pode “corrigir” nomes por estética, opinião, preferência pessoal ou convenção genérica de mercado.
+
+Exemplos proibidos:
+- trocar `funcionarios_id` por `funcionario_id` porque “parece mais certo”;
+- trocar `id_funcionarios` por `funcionarios_id` sem confirmar o banco;
+- trocar plural por singular sem validar o contrato real;
+- traduzir nomes do banco para inglês sem camada de adaptação formal;
+- criar alias silencioso em query para esconder inconsistência estrutural.
+
+Se existir inconsistência histórica no banco, o agente deve:
+1. apontar a inconsistência;
+2. preservar compatibilidade;
+3. propor refatoração controlada;
+4. nunca mascarar o problema com nomes novos não homologados.
+
+## 14) Checklist obrigatório antes de concluir qualquer tarefa com banco/API/backend
+
+Antes de concluir, o agente deve validar explicitamente:
+
+- Qual é o nome exato da tabela real?
+- Qual é o nome exato das colunas reais?
+- Quais campos são PK e FK?
+- Quais tipos reais cada campo possui?
+- Existe nullable, default, enum, trigger ou constraint?
+- A API está usando exatamente os nomes corretos ou um mapper explícito?
+- O backend está lendo e gravando o mesmo contrato?
+- Os DTOs e schemas refletem a estrutura real?
+- Os joins e filtros usam as chaves corretas?
+- Existe alguma duplicidade semântica de nomes?
+- Foi criada alguma nova tabela/rota sem necessidade?
+- A mudança preserva compatibilidade com o banco existente?
+
+Se qualquer uma dessas respostas não estiver validada, a tarefa não pode ser considerada segura para execução.
+
+## 15) Regra final de segurança estrutural
+
+Em qualquer dúvida sobre nomes, tipos, relacionamentos ou contrato entre banco e API, o agente deve parar e validar a estrutura real antes de alterar código.
+
+Presumir é proibido.
+Inferir sem confirmação é proibido.
+Criar nomenclatura paralela é proibido.
+Mascarar inconsistência estrutural com aliases improvisados é proibido.
+
+A prioridade máxima é preservar integridade estrutural, compatibilidade de contrato e consistência entre banco, API e backend.
+
+# 16) Regra de consistência de estado
 
 Sempre que um estado mudar em uma entidade, o agente deve verificar se esse mesmo estado precisa ser refletido em outras camadas ou entidades.
 
@@ -190,7 +411,7 @@ O agente deve tratar estado como algo que pode precisar de:
 
 ---
 
-# 6) Regra para qualquer novo campo, tabela, fluxo ou relacionamento
+# 17) Regra para qualquer novo campo, tabela, fluxo ou relacionamento
 
 Sempre que for criado ou alterado algo no banco, na API, no frontend ou no fluxo operacional, o agente deve avaliar explicitamente:
 
@@ -208,7 +429,7 @@ O agente nunca deve agir como se o sistema fosse estático.
 
 ---
 
-# 7) Regra anti-esquecimento de vínculo
+# 18) Regra anti-esquecimento de vínculo
 
 O agente deve considerar como falha grave qualquer situação em que:
 
@@ -227,7 +448,7 @@ Se a mudança tocar qualquer parte relacionada a dados ou estado, o agente deve 
 - pontos onde a atualização pode ser esquecida.
 
 ---
-8) Regras de nomenclatura
+19) Regras de nomenclatura
 
 - **Componentes Vue (`/app/components`)** → **PascalCase**  
   Ex.: `UserCard.vue`, `AuthButton.vue`
@@ -261,7 +482,7 @@ Se a mudança tocar qualquer parte relacionada a dados ou estado, o agente deve 
 inclusion: always
 ---
 
-# 9) Regra de conclusão de tarefa
+# 20) Regra de conclusão de tarefa
 
 Uma tarefa só pode ser considerada concluída quando o agente tiver validado, no mínimo:
 
@@ -295,3 +516,112 @@ O agente deve seguir estas instruções em ordem de prioridade:
 5. **Preferências pontuais do desenvolvedor**
 
 Se houver conflito entre instruções, a prioridade sempre será a de cima.
+
+---
+
+# 21) Regra de inspiração de produto — Monday.com e Trello
+
+Toda funcionalidade de UI/UX implementada neste projeto deve ser **inspirada no Monday.com e no Trello**.
+
+Antes de implementar qualquer feature de interface, o agente deve perguntar mentalmente:
+
+- Como o Monday.com resolve isso?
+- Como o Trello resolve isso?
+- Qual dos dois tem a abordagem mais adequada para o contexto atual?
+- A implementação está alinhada com a experiência visual e de interação desses produtos?
+
+## Referências obrigatórias por tipo de funcionalidade
+
+**Colunas do board (Status, Prazo, Prioridade, Responsável, etc.)**
+→ Inspirar no Monday.com: etiquetas coloridas, dropdowns inline, edição direta na célula da linha.
+
+**Cards e visualização Kanban**
+→ Inspirar no Trello: cards compactos, drag & drop fluido, cores de etiqueta visíveis.
+
+**Modais de tarefa**
+→ Inspirar no Monday.com: painel lateral ou modal com todos os campos organizados em seções.
+
+**Navegação e sidebar**
+→ Inspirar no Monday.com: sidebar com workspaces, boards agrupados, favoritos e recentes.
+
+**Estados vazios, loading e erro**
+→ Inspirar nos dois: ilustrações leves, mensagens amigáveis, CTAs claros.
+
+**Feedback de ações (toasts, confirmações)**
+→ Inspirar no Monday.com: toasts discretos no canto, confirmações inline sem modais desnecessários.
+
+## Regra de qualidade visual
+
+- Nenhum componente deve parecer "genérico" ou "de template".
+- Cores, espaçamentos, tipografia e interações devem transmitir a mesma sensação de produto profissional que o Monday.com e o Trello transmitem.
+- Sempre usar os design tokens do projeto (`tokens.css`, `tailwind.config.ts`) para manter consistência.
+
+**Esta regra se aplica a toda e qualquer implementação de interface, sem exceção.**
+
+---
+
+# 22) Regra de uso do shadcn como referência de componentes
+
+Antes de criar qualquer componente de UI, o agente DEVE:
+
+1. Consultar o MCP shadcn (`mcp_shadcn_get_item_examples_from_registries` ou `mcp_shadcn_view_items_in_registries`) para ver a estrutura, padrão visual e demo do componente equivalente
+2. Usar a demo do shadcn como base de design — estrutura HTML, classes Tailwind, estados (hover, focus, disabled, loading), acessibilidade (aria-*)
+3. Adaptar o código para Vue 3 + Tailwind, mantendo o padrão visual do shadcn
+
+**O shadcn NÃO está instalado no projeto** (incompatibilidade com Nuxt 4 + Tailwind v3 config). Portanto:
+- NÃO usar `npx shadcn-vue@latest add`
+- NÃO importar componentes de `@/components/ui`
+- USAR apenas como referência visual e de estrutura
+
+Componentes shadcn relevantes para este projeto:
+- `dropdown-menu` → base para StatusCell, PriorityCell
+- `badge` → base para StatusBadge
+- `avatar` → base para Avatar, AvatarStack
+- `popover` → base para dropdowns inline
+- `tooltip` → base para títulos com hover
+- `input` → base para campos inline editáveis
+- `calendar` → base para DueDateCell com picker
+- `table` → base para TaskRow e layout do board
+
+---
+
+# 23) Regra obrigatória de Mobile-First
+
+**Todo componente e página deve ser desenvolvido mobile-first, sem exceção.**
+
+## Breakpoints obrigatórios
+
+- Mobile: < 640px (base — sempre implementar primeiro)
+- Tablet: 640px–1024px (`sm:` / `md:`)
+- Desktop: > 1024px (`lg:` / `xl:`)
+
+## Regras de implementação
+
+### Layout
+- Nunca usar `flex` horizontal com múltiplos itens sem garantir que funciona em 320px
+- Em mobile, listas de colunas/células devem colapsar ou usar scroll horizontal com `overflow-x-auto`
+- Dropdowns e popovers devem ter posicionamento adaptativo — nunca sair da viewport
+
+### Touch targets
+- Todo botão clicável deve ter mínimo `min-h-[44px] min-w-[44px]` em mobile
+- Usar `p-3` ou maior em botões de ação em mobile
+
+### TaskRow (board)
+- Mobile: mostrar apenas título + status + responsável (colunas essenciais)
+- Tablet+: mostrar colunas adicionais conforme visibilidade configurada
+- Desktop: layout completo com todas as colunas visíveis
+
+### Dropdowns e popovers
+- Usar `right-0` em vez de `left-0` quando próximo à borda direita
+- Em mobile, dropdowns devem ser `w-full` ou posicionados com `fixed` se necessário
+
+### Inputs inline
+- Considerar teclado virtual em mobile — não usar `position: fixed` em elementos que ficam acima do teclado
+- Input de criação de tarefa deve ter `font-size: 16px` mínimo para evitar zoom automático no iOS
+
+### Checklist antes de concluir qualquer tarefa de UI
+- [ ] Testei mentalmente em 320px?
+- [ ] Touch targets >= 44px?
+- [ ] Dropdowns não saem da viewport?
+- [ ] Texto legível sem zoom?
+- [ ] Scroll horizontal apenas onde intencional?

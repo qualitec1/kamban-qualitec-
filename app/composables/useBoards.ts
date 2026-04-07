@@ -57,26 +57,32 @@ export function useBoards() {
 
     try {
       const supabase = getClient()
-      const { data, error: insertError } = await supabase
+
+      // Gerar UUID no cliente para saber o board_id antes de inserir
+      // Isso evita o problema de RLS: board privado não pode ser lido
+      // antes de ter o owner em board_members
+      const boardId = crypto.randomUUID()
+
+      const { error: insertError } = await supabase
         .from('boards')
-        .insert({ ...payload, created_by: authUser.value.id })
-        .select()
-        .single()
+        .insert({ id: boardId, ...payload, created_by: authUser.value.id })
 
       if (insertError) throw insertError
 
-      // Sempre adicionar o criador como owner em board_members
-      // Isso é essencial para boards privados (RLS depende de board_members)
+      // Adicionar criador como owner (necessário para RLS de boards privados)
       await supabase
         .from('board_members')
-        .insert({
-          board_id: data.id,
-          user_id: authUser.value.id,
-          access_role: 'owner'
-        })
+        .insert({ board_id: boardId, user_id: authUser.value.id, access_role: 'owner' })
+
+      // Criar grupo padrão
+      await supabase
+        .from('task_groups')
+        .insert({ board_id: boardId, name: 'Tarefas', color: '#6366f1', sort_order: 0, is_collapsed: false })
 
       await fetchBoards(payload.workspace_id)
-      return data
+
+      // Retornar o board da lista já atualizada
+      return boards.value.find(b => b.id === boardId) ?? null
     } catch (e: any) {
       error.value = e.message
       return null

@@ -223,7 +223,7 @@
                   v-model="regForm.password"
                   :type="showRegPassword ? 'text' : 'password'"
                   autocomplete="new-password"
-                  placeholder="Mínimo 6 caracteres"
+                  placeholder="Mínimo 8 caracteres"
                   class="w-full px-4 py-3 pr-11 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all bg-white/15 lg:bg-white border border-white/25 lg:border-neutral-200 text-white lg:text-neutral-900 placeholder:text-white/50 lg:placeholder:text-neutral-400 backdrop-blur-sm lg:backdrop-blur-none"
                   :class="{ 'border-red-400': regErrors.password }"
                 />
@@ -242,6 +242,33 @@
                   </svg>
                 </button>
               </div>
+
+              <!-- Indicador de força da senha -->
+              <div v-if="regForm.password" class="mt-2 space-y-1.5">
+                <!-- Barra de força -->
+                <div class="flex gap-1">
+                  <div
+                    v-for="i in 4" :key="i"
+                    class="h-1 flex-1 rounded-full transition-all duration-300"
+                    :class="i <= passwordStrength.score ? passwordStrength.barColor : 'bg-white/20 lg:bg-neutral-200'"
+                  />
+                </div>
+                <!-- Requisitos -->
+                <div class="space-y-0.5">
+                  <p
+                    v-for="req in passwordRequirements" :key="req.label"
+                    class="flex items-center gap-1.5 text-xs transition-colors"
+                    :class="req.met ? 'text-emerald-400 lg:text-emerald-600' : 'text-white/50 lg:text-neutral-400'"
+                  >
+                    <svg class="w-3 h-3 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                      <path v-if="req.met" stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                      <path v-else stroke-linecap="round" stroke-linejoin="round" d="M12 12m-1 0a1 1 0 102 0 1 1 0 10-2 0" />
+                    </svg>
+                    {{ req.label }}
+                  </p>
+                </div>
+              </div>
+
               <p v-if="regErrors.password" class="text-xs mt-1 text-red-300 lg:text-red-500">{{ regErrors.password }}</p>
             </div>
 
@@ -340,7 +367,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import { useAuth } from '~/composables/useAuth'
 
 definePageMeta({
@@ -366,6 +393,19 @@ const videoMobile  = ref<HTMLVideoElement | null>(null)
 const isMuted = ref(true)
 const showPassword    = ref(false)
 const showRegPassword = ref(false)
+
+// Requisitos de senha
+const passwordRequirements = computed(() => [
+  { label: 'Mínimo 8 caracteres',       met: regForm.password.length >= 8 },
+  { label: 'Uma letra maiúscula (A-Z)',  met: /[A-Z]/.test(regForm.password) },
+  { label: 'Um número (0-9)',            met: /[0-9]/.test(regForm.password) },
+])
+
+const passwordStrength = computed(() => {
+  const score = passwordRequirements.value.filter(r => r.met).length
+  const colors = ['', 'bg-red-400', 'bg-yellow-400', 'bg-emerald-400', 'bg-emerald-500']
+  return { score, barColor: colors[score] ?? 'bg-neutral-200' }
+})
 
 function toggleMute() {
   isMuted.value = !isMuted.value
@@ -393,7 +433,9 @@ function validateRegister(): boolean {
   if (!regForm.email) { regErrors.email = 'Informe seu e-mail.'; return false }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(regForm.email)) { regErrors.email = 'E-mail inválido.'; return false }
   if (!regForm.password) { regErrors.password = 'Informe uma senha.'; return false }
-  if (regForm.password.length < 6) { regErrors.password = 'Mínimo 6 caracteres.'; return false }
+  if (regForm.password.length < 8) { regErrors.password = 'Mínimo 8 caracteres.'; return false }
+  if (!/[A-Z]/.test(regForm.password)) { regErrors.password = 'Inclua ao menos uma letra maiúscula.'; return false }
+  if (!/[0-9]/.test(regForm.password)) { regErrors.password = 'Inclua ao menos um número.'; return false }
   return true
 }
 
