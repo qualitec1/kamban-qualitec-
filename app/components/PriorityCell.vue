@@ -1,6 +1,8 @@
 <template>
   <div class="relative" ref="rootRef">
+    <!-- Clickable button (apenas se tiver permissão) -->
     <button
+      v-if="canEditTasks"
       type="button"
       class="flex items-center gap-1 h-full min-w-[80px] max-w-[140px] min-h-[44px]"
       @click="toggleDropdown"
@@ -15,9 +17,24 @@
       <span v-else class="text-xs text-neutral-300">—</span>
     </button>
 
+    <!-- Read-only view (sem permissão) -->
+    <div
+      v-else
+      class="flex items-center gap-1 h-full min-w-[80px] max-w-[140px] min-h-[44px] cursor-default"
+      :title="currentPriority?.name ?? 'Sem prioridade'"
+    >
+      <template v-if="currentPriority">
+        <span class="w-2 h-2 rounded-full shrink-0" :style="{ backgroundColor: currentPriority.color }" />
+        <span class="text-xs font-medium truncate" :style="{ color: currentPriority.color }">
+          {{ currentPriority.name }}
+        </span>
+      </template>
+      <span v-else class="text-xs text-neutral-300">—</span>
+    </div>
+
     <Teleport to="body">
       <div
-        v-if="open"
+        v-if="open && canEditTasks"
         class="fixed z-[9999] w-44 bg-white border border-neutral-200 rounded-lg shadow-xl py-1 max-h-64 overflow-y-auto"
         :style="dropdownStyle"
       >
@@ -47,11 +64,14 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useTaskPriorities } from '~/composables/useTaskPriorities'
+import { useBoardPermissions } from '~/composables/useBoardPermissions'
 
 const props = defineProps<{ taskId: string; boardId: string; priorityId: string | null }>()
 const emit = defineEmits<{ (e: 'update:priorityId', value: string | null): void }>()
 
 const { priorities, fetchPriorities, updateTaskPriority } = useTaskPriorities(props.boardId)
+const { canEdit: canEditTasks, fetchUserRole } = useBoardPermissions(props.boardId)
+
 const open = ref(false)
 const rootRef = ref<HTMLElement | null>(null)
 const dropdownStyle = ref<Record<string, string>>({})
@@ -71,11 +91,13 @@ function calcPosition() {
 }
 
 function toggleDropdown() {
+  if (!canEditTasks.value) return
   calcPosition()
   open.value = !open.value
 }
 
 async function select(priorityId: string | null) {
+  if (!canEditTasks.value) return
   open.value = false
   if (priorityId === props.priorityId) return
   try {
@@ -88,6 +110,10 @@ function onClickOutside(e: MouseEvent) {
   if (rootRef.value && !rootRef.value.contains(e.target as Node)) open.value = false
 }
 
-onMounted(() => { fetchPriorities(); document.addEventListener('mousedown', onClickOutside) })
+onMounted(() => { 
+  fetchPriorities()
+  fetchUserRole()
+  document.addEventListener('mousedown', onClickOutside) 
+})
 onUnmounted(() => document.removeEventListener('mousedown', onClickOutside))
 </script>

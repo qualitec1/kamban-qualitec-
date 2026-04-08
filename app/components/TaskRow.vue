@@ -2,10 +2,23 @@
   <div class="border-b border-neutral-100 hover:bg-neutral-50">
     <!-- Scroll horizontal em mobile para acessar todas as colunas -->
     <div class="flex items-center gap-2 px-4 py-3 min-h-[44px] overflow-x-auto scrollbar-none">
-      <!-- Título fixo, não encolhe -->
-      <span class="text-sm text-neutral-800 truncate shrink-0 max-w-[140px] sm:max-w-none sm:flex-1">
-        {{ task.title }}
-      </span>
+      <!-- Título editável inline -->
+      <TitleCell
+        :task-id="task.id"
+        :board-id="task.board_id"
+        :title="currentTitle"
+        @update:title="currentTitle = $event"
+        @open-modal="showModal = true"
+      />
+
+      <!-- Modal completo da tarefa -->
+      <TaskModal
+        v-model="showModal"
+        :task-id="task.id"
+        :board-id="task.board_id"
+        @updated="onTaskUpdated"
+        @deleted="onTaskDeleted"
+      />
 
       <!-- Todas as colunas na ordem configurada -->
       <template v-for="col in orderedColumns" :key="col.key">
@@ -31,6 +44,7 @@
           <NotesCell
             v-else-if="col.key === 'notes'"
             :task-id="task.id"
+            :board-id="task.board_id"
             :note="currentNote"
             @update:note="currentNote = $event"
           />
@@ -59,6 +73,7 @@
           <AssigneeCell
             v-else-if="col.key === 'assignee'"
             :task-id="task.id"
+            :board-id="task.board_id"
           />
         </template>
       </template>
@@ -72,14 +87,37 @@ import type { Tables } from '#shared/types/database'
 import { useBoardColumns } from '~/composables/useBoardColumns'
 
 const props = defineProps<{
-  task: Pick<Tables<'tasks'>, 'id' | 'title' | 'group_id' | 'board_id' | 'status_id' | 'priority_id' | 'due_date' | 'start_date' | 'description' | 'budget' | 'updated_at'>
+  task: Pick<Tables<'tasks'>, 'id' | 'title' | 'group_id' | 'board_id' | 'status_id' | 'priority_id' | 'due_date' | 'start_date' | 'description' | 'notes' | 'budget' | 'updated_at'>
 }>()
 
+const emit = defineEmits<{ 
+  (e: 'taskUpdated', id: string): void
+  (e: 'taskDeleted', id: string): void
+}>()
+
+const showModal = ref(false)
+
+function onTaskUpdated(patch: { field: string; value: unknown }) {
+  // Sync local reactive state so the row reflects changes immediately
+  if (patch.field === 'title')        currentTitle.value      = patch.value as string
+  if (patch.field === 'status_id')    currentStatusId.value   = patch.value as string | null
+  if (patch.field === 'priority_id')  currentPriorityId.value = patch.value as string | null
+  if (patch.field === 'notes')        currentNote.value       = patch.value as string | null
+  if (patch.field === 'budget')       currentBudget.value     = patch.value as number | null
+  if (patch.field === 'start_date')   currentStartDate.value  = patch.value as string | null
+  if (patch.field === 'due_date')     currentEndDate.value    = patch.value as string | null
+  emit('taskUpdated', props.task.id)
+}
+
+function onTaskDeleted(taskId: string) {
+  emit('taskDeleted', taskId)
+}
 const { orderedColumns, isVisible } = useBoardColumns(props.task.board_id)
 
+const currentTitle      = ref<string>(props.task.title)
 const currentStatusId   = ref<string | null>(props.task.status_id ?? null)
 const currentPriorityId = ref<string | null>(props.task.priority_id ?? null)
-const currentNote       = ref<string | null>(props.task.description ?? null)
+const currentNote       = ref<string | null>(props.task.notes ?? null)
 const currentBudget     = ref<number | null>(props.task.budget ?? null)
 const currentStartDate  = ref<string | null>(props.task.start_date ?? null)
 const currentEndDate    = ref<string | null>(props.task.due_date ?? null)

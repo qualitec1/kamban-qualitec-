@@ -1,6 +1,8 @@
 <template>
   <div class="relative" ref="rootRef">
+    <!-- Clickable button (apenas se tiver permissão) -->
     <button
+      v-if="canEditTasks"
       type="button"
       class="flex items-center h-full min-w-[80px] max-w-[140px] min-h-[44px]"
       @click="toggleDropdown"
@@ -10,10 +12,20 @@
       <span v-else class="text-xs text-neutral-300 italic">—</span>
     </button>
 
+    <!-- Read-only view (sem permissão) -->
+    <div
+      v-else
+      class="flex items-center h-full min-w-[80px] max-w-[140px] min-h-[44px] cursor-default"
+      :title="currentStatus?.name ?? 'Sem status'"
+    >
+      <StatusBadge v-if="currentStatus" :status="currentStatus" />
+      <span v-else class="text-xs text-neutral-300 italic">—</span>
+    </div>
+
     <!-- Teleport para body — evita ser cortado por overflow:hidden dos pais -->
     <Teleport to="body">
       <div
-        v-if="open"
+        v-if="open && canEditTasks"
         class="fixed z-[9999] w-48 bg-white border border-neutral-200 rounded-lg shadow-xl py-1 max-h-64 overflow-y-auto"
         :style="dropdownStyle"
       >
@@ -46,11 +58,14 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useTaskStatuses } from '~/composables/useTaskStatuses'
+import { useBoardPermissions } from '~/composables/useBoardPermissions'
 
 const props = defineProps<{ taskId: string; boardId: string; statusId: string | null }>()
 const emit = defineEmits<{ (e: 'update:statusId', value: string | null): void }>()
 
 const { statuses, loading, fetchStatuses, updateTaskStatus } = useTaskStatuses(props.boardId)
+const { canEdit: canEditTasks, fetchUserRole } = useBoardPermissions(props.boardId)
+
 const open = ref(false)
 const rootRef = ref<HTMLElement | null>(null)
 const dropdownStyle = ref<Record<string, string>>({})
@@ -75,11 +90,13 @@ function calcPosition() {
 }
 
 function toggleDropdown() {
+  if (!canEditTasks.value) return
   calcPosition()
   open.value = !open.value
 }
 
 async function select(statusId: string | null) {
+  if (!canEditTasks.value) return
   open.value = false
   if (statusId === props.statusId) return
   try {
@@ -92,6 +109,10 @@ function onClickOutside(e: MouseEvent) {
   if (rootRef.value && !rootRef.value.contains(e.target as Node)) open.value = false
 }
 
-onMounted(() => { fetchStatuses(); document.addEventListener('mousedown', onClickOutside) })
+onMounted(() => { 
+  fetchStatuses()
+  fetchUserRole()
+  document.addEventListener('mousedown', onClickOutside) 
+})
 onUnmounted(() => document.removeEventListener('mousedown', onClickOutside))
 </script>

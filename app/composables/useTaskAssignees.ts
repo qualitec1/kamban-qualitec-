@@ -46,10 +46,48 @@ export function useTaskAssignees(taskId: string) {
     }
   }
 
+  async function addAssignee(userId: string, id: string = taskId) {
+    try {
+      const supabase = getClient()
+      const { error: insertError } = await supabase
+        .from('task_assignees')
+        .insert({ task_id: id, user_id: userId })
+
+      if (insertError) throw insertError
+
+      await fetchAssignees(id)
+      return true
+    } catch (e: any) {
+      error.value = e.message ?? 'Unknown error'
+      return false
+    }
+  }
+
+  async function removeAssignee(userId: string, id: string = taskId) {
+    try {
+      const supabase = getClient()
+      const { error: deleteError } = await supabase
+        .from('task_assignees')
+        .delete()
+        .eq('task_id', id)
+        .eq('user_id', userId)
+
+      if (deleteError) throw deleteError
+
+      await fetchAssignees(id)
+      return true
+    } catch (e: any) {
+      error.value = e.message ?? 'Unknown error'
+      return false
+    }
+  }
+
   return {
     assignees,
     loading,
     error,
-    fetchAssignees
+    fetchAssignees,
+    addAssignee,
+    removeAssignee
   }
 }

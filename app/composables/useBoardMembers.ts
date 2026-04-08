@@ -91,7 +91,9 @@ export function useBoardMembers() {
       if (updateError) throw updateError
 
       const idx = members.value.findIndex(m => m.user_id === userId)
-      if (idx !== -1) members.value[idx].access_role = role
+      if (idx !== -1 && members.value[idx]) {
+        members.value[idx].access_role = role
+      }
       return true
     } catch (e: any) {
       error.value = e.message
@@ -137,6 +139,29 @@ export function useBoardMembers() {
     }
   }
 
+  async function getUserRole(boardId: string, userId?: string): Promise<AccessRole | null> {
+    const uid = userId || authUser.value?.id
+    if (!uid) return null
+
+    try {
+      const supabase = getClient()
+      const { data } = await supabase
+        .from('board_members')
+        .select('access_role')
+        .eq('board_id', boardId)
+        .eq('user_id', uid)
+        .single()
+
+      return data?.access_role ?? null
+    } catch {
+      return null
+    }
+  }
+
+  function canEdit(role: AccessRole | null): boolean {
+    return role === 'owner' || role === 'editor'
+  }
+
   return {
     members,
     loading,
@@ -145,6 +170,8 @@ export function useBoardMembers() {
     addMember,
     updateRole,
     removeMember,
-    isMember
+    isMember,
+    getUserRole,
+    canEdit
   }
 }

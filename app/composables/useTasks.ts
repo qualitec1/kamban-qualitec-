@@ -4,7 +4,7 @@ import type { Tables } from '#shared/types/database'
 export type TaskRow = Pick<
   Tables<'tasks'>,
   'id' | 'title' | 'group_id' | 'board_id' | 'status_id' | 'priority_id' |
-  'due_date' | 'start_date' | 'description' | 'budget' | 'updated_at'
+  'due_date' | 'start_date' | 'description' | 'notes' | 'budget' | 'updated_at'
 >
 
 export function useTasks() {

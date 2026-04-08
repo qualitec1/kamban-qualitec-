@@ -10,6 +10,22 @@
       <ClientOnly>
         <div class="flex items-center gap-2">
           <ColumnVisibilityMenu :board-id="boardId" />
+          <!-- Toggle tarefas arquivadas -->
+          <button
+            @click="toggleShowArchived"
+            :title="showArchived ? 'Mostrar tarefas ativas' : 'Mostrar tarefas arquivadas'"
+            :class="[
+              'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-label-sm font-medium transition-colors',
+              showArchived
+                ? 'bg-amber-100 text-amber-700 hover:bg-amber-200'
+                : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+            ]"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+            </svg>
+            {{ showArchived ? 'Arquivadas' : 'Arquivo' }}
+          </button>
           <!-- Toggle grupos vazios -->
           <button
             @click="toggleShowEmptyGroups"
@@ -163,6 +179,7 @@
             v-for="task in tasksByGroup[group.id]"
             :key="task.id"
             :task="task"
+            @task-deleted="handleTaskDeleted"
           />
           <p
             v-if="!(tasksByGroup[group.id]?.length)"
@@ -279,56 +296,45 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRoute, useNuxtApp } from '#imports'
+import { useRoute } from '#imports'
 import { useTaskGroups } from '~/composables/useTaskGroups'
-import { useBoards } from '~/composables/useBoards'
-import { useAuth } from '~/composables/useAuth'
-import { useTasks } from '~/composables/useTasks'
-import type { SupabaseClient } from '@supabase/supabase-js'
-import type { Tables } from '#shared/types/database'
-
-type Board = Tables<'boards'>
-type TaskRow = Pick<Tables<'tasks'>, 'id' | 'title' | 'group_id' | 'board_id' | 'status_id' | 'priority_id' | 'due_date' | 'start_date' | 'description' | 'budget' | 'updated_at'>
+import { useBoardData } from '~/composables/useBoardData'
+import { useTasks, type TaskRow } from '~/composables/useTasks'
 
 const route = useRoute()
 const boardId = route.params.id as string
 
-const { groups, loading, error, fetchGroups, addGroup, renameGroup, deleteGroup, toggleCollapse, reorderGroups } = useTaskGroups()
-const { boards, fetchBoards } = useBoards()
-const { isMaster, user } = useAuth()
-const { $supabase } = useNuxtApp() as unknown as { $supabase: SupabaseClient }
+// Usar composable otimizado para carregar dados
+const {
+  board,
+  groups,
+  tasksByGroup,
+  canEdit,
+  loading,
+  error,
+  fetchAll,
+  invalidateCache,
+  refreshGroupTasks
+} = useBoardData(boardId)
 
-// Busca o access_role do usuário neste board específico
-const boardAccessRole = ref<string | null>(null)
-
-async function fetchBoardAccessRole() {
-  if (!user.value) return
-  if (isMaster.value) { boardAccessRole.value = 'owner'; return }
-  const { data } = await $supabase
-    .from('board_members')
-    .select('access_role')
-    .eq('board_id', boardId)
-    .eq('user_id', user.value.id)
-    .single()
-  boardAccessRole.value = data?.access_role ?? null
-}
-
-// canEdit: master global OU owner/editor no board específico
-const canEdit = computed(() =>
-  isMaster.value ||
-  boardAccessRole.value === 'owner' ||
-  boardAccessRole.value === 'editor'
-)
-const board = computed<Board | undefined>(() => boards.value.find(b => b.id === boardId))
+// Composables para mutações
+const { addGroup, renameGroup, deleteGroup, toggleCollapse, reorderGroups } = useTaskGroups()
 
 // Preferência: mostrar grupos vazios (persiste em localStorage)
 const showEmptyGroups = ref(true)
 const storageKey = `board-show-empty-${boardId}`
 
+// Preferência: mostrar tarefas arquivadas
+const showArchived = ref(false)
+const archivedStorageKey = `board-show-archived-${boardId}`
+
 function loadShowEmptyPref() {
   if (import.meta.client) {
     const saved = localStorage.getItem(storageKey)
     if (saved !== null) showEmptyGroups.value = saved === 'true'
+    
+    const archivedSaved = localStorage.getItem(archivedStorageKey)
+    if (archivedSaved !== null) showArchived.value = archivedSaved === 'true'
   }
 }
 
@@ -339,24 +345,23 @@ function toggleShowEmptyGroups() {
   }
 }
 
-// Grupos filtrados: quando showEmptyGroups=false, oculta grupos sem tarefas
-const tasksByGroup = ref<Record<string, TaskRow[]>>({})
-const taskCountByGroup = ref<Record<string, number>>({})
-
-async function fetchTasksForGroup(groupId: string) {
-  const { data, error: fetchError } = await $supabase
-    .from('tasks')
-    .select('id, title, group_id, board_id, status_id, priority_id, due_date, start_date, description, budget, updated_at')
-    .eq('group_id', groupId)
-
-  if (!fetchError && data) {
-    tasksByGroup.value[groupId] = data as TaskRow[]
-    taskCountByGroup.value[groupId] = data.length
-  } else {
-    tasksByGroup.value[groupId] = []
-    taskCountByGroup.value[groupId] = 0
+function toggleShowArchived() {
+  showArchived.value = !showArchived.value
+  if (import.meta.client) {
+    localStorage.setItem(archivedStorageKey, String(showArchived.value))
   }
+  // Recarregar com novo filtro
+  fetchAll(showArchived.value)
 }
+
+// Grupos filtrados: quando showEmptyGroups=false, oculta grupos sem tarefas
+const taskCountByGroup = computed(() => {
+  const counts: Record<string, number> = {}
+  for (const groupId in tasksByGroup.value) {
+    counts[groupId] = tasksByGroup.value[groupId]?.length ?? 0
+  }
+  return counts
+})
 
 const visibleGroups = computed(() => {
   if (showEmptyGroups.value) return groups.value
@@ -479,6 +484,9 @@ async function handleAddGroup() {
   addingGroup.value = false
   if (result) {
     showAddGroupModal.value = false
+    // Invalidar cache e recarregar
+    invalidateCache()
+    await fetchAll(showArchived.value)
   } else {
     addGroupError.value = 'Erro ao criar grupo. Tente novamente.'
   }
@@ -491,7 +499,11 @@ async function saveRename(groupId: string, name: string) {
 }
 
 async function handleDeleteGroup(groupId: string) {
-  await deleteGroup(groupId, boardId)
+  const success = await deleteGroup(groupId, boardId)
+  if (success) {
+    invalidateCache()
+    await fetchAll(showArchived.value)
+  }
 }
 
 // Criação de tarefa — input inline
@@ -517,21 +529,31 @@ async function saveNewTask(groupId: string) {
   try {
     const task = await createTask({ boardId, groupId, title })
     if (task) {
-      if (!tasksByGroup.value[groupId]) tasksByGroup.value[groupId] = []
-      tasksByGroup.value[groupId].push(task)
-      taskCountByGroup.value[groupId] = (taskCountByGroup.value[groupId] ?? 0) + 1
+      // Atualizar tarefas do grupo
+      await refreshGroupTasks(groupId, showArchived.value)
     }
   } catch { /* silently fail */ }
 }
 
+function handleTaskDeleted(taskId: string) {
+  // Remove a tarefa de todos os grupos localmente
+  for (const groupId in tasksByGroup.value) {
+    const tasks = tasksByGroup.value[groupId]
+    if (!tasks) continue
+    const index = tasks.findIndex(t => t.id === taskId)
+    if (index !== -1) {
+      tasks.splice(index, 1)
+      break
+    }
+  }
+}
+
 async function load() {
-  await Promise.all([fetchGroups(boardId), fetchBoards(), fetchBoardAccessRole()])
-  await Promise.all(groups.value.map(g => fetchTasksForGroup(g.id)))
+  await fetchAll(showArchived.value)
 }
 
 onMounted(async () => {
   loadShowEmptyPref()
-  await Promise.all([fetchGroups(boardId), fetchBoards(), fetchBoardAccessRole()])
-  await Promise.all(groups.value.map(g => fetchTasksForGroup(g.id)))
+  await fetchAll(showArchived.value)
 })
 </script>
