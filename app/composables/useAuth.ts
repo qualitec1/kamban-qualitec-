@@ -59,14 +59,15 @@ export function useAuth() {
     try {
       const sb = getClient()
       
-      // Sign up with Supabase Auth
+      // Sign up with Supabase Auth - email confirmation disabled
       const { data, error } = await sb.auth.signUp({
         email,
         password,
         options: {
           data: {
             full_name: fullName,
-          }
+          },
+          emailRedirectTo: undefined, // Disable email confirmation
         }
       })
 

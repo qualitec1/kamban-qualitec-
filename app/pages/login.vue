@@ -180,7 +180,7 @@
               <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <p class="text-sm font-medium text-emerald-200 lg:text-emerald-700">Conta criada com sucesso!</p>
-            <p class="text-xs text-emerald-300 lg:text-emerald-600 mt-1">Verifique seu e-mail para confirmar o cadastro.</p>
+            <p class="text-xs text-emerald-300 lg:text-emerald-600 mt-1">Você já pode fazer login.</p>
             <button @click="mode = 'login'" class="mt-3 text-xs font-medium text-indigo-300 lg:text-indigo-600 hover:underline">
               Ir para o login
             </button>
