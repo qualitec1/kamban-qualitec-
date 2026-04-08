@@ -1,5 +1,13 @@
 # Guia de Etiquetas (Labels)
 
+## ✨ Novidades (v2.0)
+
+- **Edição de etiquetas**: Clique no ícone de lápis para editar nome e cor
+- **Deleção de etiquetas**: Clique no ícone de lixeira para deletar (remove de todas as tarefas)
+- **Drag-and-drop**: Reordene etiquetas na linha da tarefa
+- **Ícone paint bucket**: Novo ícone Monday.com style quando não há etiquetas
+- **Melhor UX**: Botões de edição/deleção aparecem ao passar o mouse
+
 ## Visão Geral
 
 Este projeto possui dois sistemas de etiquetas distintos, inspirados no Monday.com e Trello:
@@ -48,13 +56,33 @@ Este projeto possui dois sistemas de etiquetas distintos, inspirados no Monday.c
 - Múltiplas labels por tarefa
 - Mostra até 2 labels na linha (configurável)
 - Indicador "+N" para labels adicionais
+- Ícone paint bucket (Monday.com style) quando vazio
 
 **Como criar:**
-1. Clique na célula de labels de qualquer tarefa
+1. Clique na célula de labels de qualquer tarefa (ícone paint bucket)
 2. Clique em "Criar nova etiqueta"
 3. Digite o nome da label (máx. 50 caracteres)
 4. Escolha uma cor da paleta
 5. Clique em "Criar"
+
+**Como editar:**
+1. Abra o dropdown de labels
+2. Passe o mouse sobre a label que deseja editar
+3. Clique no ícone de lápis (edit)
+4. Altere o nome e/ou cor
+5. Clique em "Salvar"
+
+**Como deletar:**
+1. Abra o dropdown de labels
+2. Passe o mouse sobre a label que deseja deletar
+3. Clique no ícone de lixeira (delete)
+4. Confirme a exclusão
+5. A label será removida de todas as tarefas
+
+**Como reordenar:**
+1. Na linha da tarefa, clique e arraste uma label
+2. Solte sobre outra label para reordenar
+3. A ordem é mantida apenas na visualização (não é persistida no banco)
 
 **Cores disponíveis:**
 - 18 cores pré-definidas inspiradas no Tailwind CSS

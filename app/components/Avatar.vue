@@ -27,7 +27,7 @@ import type { AssigneeProfile } from '~/shared/types/assignee'
 
 const props = withDefaults(defineProps<{
   profile: AssigneeProfile
-  size?: 'sm' | 'md'
+  size?: 'xs' | 'sm' | 'md'
 }>(), {
   size: 'sm',
 })
@@ -36,9 +36,17 @@ const imageError = ref(false)
 
 const showImage = computed(() => !!props.profile.avatar_url && !imageError.value)
 
-const sizeClass = computed(() => props.size === 'md' ? 'w-8 h-8' : 'w-6 h-6')
+const sizeClass = computed(() => {
+  if (props.size === 'xs') return 'w-5 h-5'
+  if (props.size === 'md') return 'w-8 h-8'
+  return 'w-6 h-6'
+})
 
-const initialsTextSize = computed(() => props.size === 'md' ? 'text-xs' : 'text-[10px]')
+const initialsTextSize = computed(() => {
+  if (props.size === 'xs') return 'text-[9px]'
+  if (props.size === 'md') return 'text-xs'
+  return 'text-[10px]'
+})
 
 const displayName = computed(() =>
   props.profile.full_name || props.profile.email

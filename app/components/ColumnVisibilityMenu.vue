@@ -1,5 +1,12 @@
 <template>
   <div class="relative" ref="rootRef">
+    <!-- Overlay para mobile -->
+    <div
+      v-if="open && isMobile"
+      class="fixed inset-0 bg-black/30 z-40 lg:hidden"
+      @click="open = false"
+    />
+    
     <!-- Trigger -->
     <button
       type="button"
@@ -16,7 +23,9 @@
     <!-- Dropdown com checkboxes + drag to reorder (padrão Monday.com) -->
     <div
       v-if="open"
-      class="absolute z-50 top-full right-0 mt-1 w-56 bg-white border border-neutral-200 rounded-xl shadow-lg py-1.5"
+      class="fixed lg:absolute z-50 lg:top-full lg:right-0 lg:mt-1 w-[calc(100vw-16px)] max-w-[95vw] lg:w-56 bg-white border border-neutral-200 rounded-xl shadow-lg py-1.5 max-h-[70vh] overflow-y-auto"
+      :class="isMobile ? 'inset-x-2 top-20' : ''"
+      :style="isMobile ? {} : {}"
     >
       <p class="px-3 py-1.5 text-xs font-semibold text-neutral-400 uppercase tracking-wide">
         Colunas visíveis
@@ -66,7 +75,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useBoardColumns, type ColumnKey } from '~/composables/useBoardColumns'
 
 const props = defineProps<{ boardId: string }>()
@@ -75,6 +84,7 @@ const { toggle, isVisible, reorder, visibleCount, orderedColumns } = useBoardCol
 
 const open = ref(false)
 const rootRef = ref<HTMLElement | null>(null)
+const isMobile = computed(() => typeof window !== 'undefined' && window.innerWidth < 1024)
 
 // Drag state
 const draggingKey = ref<ColumnKey | null>(null)

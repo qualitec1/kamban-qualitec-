@@ -25,10 +25,10 @@
         </span>
       </div>
 
-      <!-- Estado vazio -->
+      <!-- Estado vazio - Paint bucket icon (Monday.com style) -->
       <span v-else class="text-sm text-muted">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4c-1.48 0-2.85.43-4.01 1.17l1.46 1.46C10.21 5.23 11.08 5 12 5c3.04 0 5.5 2.46 5.5 5.5v.5H19c1.66 0 3 1.34 3 3 0 1.13-.64 2.11-1.56 2.62l1.45 1.45c.9-.86 1.48-2.04 1.48-3.36 0-2.64-2.05-4.78-4.65-4.97zM3 13.5h8v8H3z"/>
         </svg>
       </span>
     </button>
@@ -191,6 +191,7 @@ const showCreateForm = ref(false)
 const newLabelName = ref('')
 const newLabelColor = ref(defaultColors[0])
 const dropdownRef = ref<HTMLElement | null>(null)
+const draggedLabelId = ref<string | null>(null)
 
 // Computed
 const displayLabels = computed(() => taskLabels.value.slice(0, maxVisible.value))
@@ -245,6 +246,39 @@ function cancelCreate() {
   showCreateForm.value = false
   newLabelName.value = ''
   newLabelColor.value = defaultColors[0]
+}
+
+// Drag and drop
+function startDrag(event: DragEvent, labelId: string) {
+  draggedLabelId.value = labelId
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = 'move'
+  }
+}
+
+function dropLabel(event: DragEvent, targetLabelId: string) {
+  event.preventDefault()
+  
+  if (!draggedLabelId.value || draggedLabelId.value === targetLabelId) {
+    draggedLabelId.value = null
+    return
+  }
+
+  // Reordenar labels na tarefa
+  const draggedIndex = taskLabels.value.findIndex(l => l.id === draggedLabelId.value)
+  const targetIndex = taskLabels.value.findIndex(l => l.id === targetLabelId)
+
+  if (draggedIndex !== -1 && targetIndex !== -1) {
+    const newLabels = [...taskLabels.value]
+    const [draggedLabel] = newLabels.splice(draggedIndex, 1)
+    newLabels.splice(targetIndex, 0, draggedLabel)
+    
+    // Atualizar a ordem (salvar os IDs na nova ordem)
+    const newLabelIds = newLabels.map(l => l.id)
+    // Aqui você pode adicionar uma função para salvar a ordem se necessário
+  }
+
+  draggedLabelId.value = null
 }
 
 // Click outside handler

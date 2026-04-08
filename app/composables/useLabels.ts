@@ -119,12 +119,14 @@ export function useLabels(boardId: string) {
     }
   }
 
-  async function updateLabel(labelId: string, updates: LabelUpdate): Promise<boolean> {
+  async function updateLabel(labelId: string, name?: string, color?: string): Promise<boolean> {
     if (!labelId) return false
 
+    const updates: LabelUpdate = {}
+
     // Validação de segurança para nome
-    if (updates.name !== undefined) {
-      const trimmedName = updates.name.trim()
+    if (name !== undefined) {
+      const trimmedName = name.trim()
       
       if (trimmedName.length === 0) {
         error.value = 'Nome da etiqueta não pode ser vazio'
@@ -146,9 +148,9 @@ export function useLabels(boardId: string) {
     }
 
     // Validação de segurança para cor
-    if (updates.color !== undefined) {
+    if (color !== undefined) {
       const hexColorRegex = /^#[0-9A-Fa-f]{6}$/
-      const normalizedColor = updates.color.toLowerCase()
+      const normalizedColor = color.toLowerCase()
       
       if (!hexColorRegex.test(normalizedColor)) {
         error.value = 'Cor inválida. Use o formato #RRGGBB'
