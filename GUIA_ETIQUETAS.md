@@ -2,18 +2,57 @@
 
 ## Visão Geral
 
-O sistema de etiquetas permite categorizar e filtrar tarefas usando tags coloridas. Inspirado no Monday.com e Trello, as etiquetas facilitam a organização visual e a busca de tarefas relacionadas.
+Este projeto possui dois sistemas de etiquetas distintos, inspirados no Monday.com e Trello:
+
+### 1. Etiquetas de Status e Prioridade (Monday.com)
+- **Status** e **Prioridade** são as "etiquetas" principais do Monday.com
+- Aparecem como botões grandes e coloridos (full-width)
+- Cada tarefa tem apenas um status e uma prioridade
+- Estilo visual: botões com fundo colorido e texto branco centralizado
+- Componentes: `StatusCell.vue`, `PriorityCell.vue`
+
+### 2. Labels/Tags Adicionais (Trello)
+- Sistema complementar de tags coloridas para categorização livre
+- Múltiplas labels por tarefa
+- Estilo visual: badges pequenas com cores vibrantes
+- Componente: `LabelsCell.vue`
+- Útil para: categorias, projetos, departamentos, tipos de tarefa, etc.
 
 ## Funcionalidades
 
-### 1. Criar Etiquetas
+### Status e Prioridade (Etiquetas Monday.com)
 
-As etiquetas são criadas por board e podem ser reutilizadas em múltiplas tarefas.
+**Estilo Visual:**
+- Botões grandes e coloridos (120-200px de largura)
+- Texto branco centralizado
+- Fundo com cor sólida
+- Hover com leve transparência
+- Mobile: min-height 44px / Desktop: min-height 36px
+
+**Dropdown:**
+- Largura fixa de 280px
+- Header com título da seção
+- Botões grandes para cada opção (mesmo estilo do botão principal)
+- Footer com "Editar etiquetas" para gerenciar opções
+- Posicionamento inteligente (não sai da viewport)
+
+**Como usar:**
+1. Clique no botão de status ou prioridade da tarefa
+2. Selecione uma opção no dropdown
+3. A mudança é salva automaticamente
+
+### Labels/Tags Adicionais (Sistema Trello)
+
+**Estilo Visual:**
+- Badges pequenas e coloridas
+- Múltiplas labels por tarefa
+- Mostra até 2 labels na linha (configurável)
+- Indicador "+N" para labels adicionais
 
 **Como criar:**
-1. Clique na célula de etiquetas de qualquer tarefa
+1. Clique na célula de labels de qualquer tarefa
 2. Clique em "Criar nova etiqueta"
-3. Digite o nome da etiqueta (máx. 50 caracteres)
+3. Digite o nome da label (máx. 50 caracteres)
 4. Escolha uma cor da paleta
 5. Clique em "Criar"
 
@@ -22,45 +61,74 @@ As etiquetas são criadas por board e podem ser reutilizadas em múltiplas taref
 - Formato hexadecimal (#RRGGBB)
 - Cores vibrantes para fácil identificação visual
 
-### 2. Adicionar Etiquetas às Tarefas
+### Adicionar Labels às Tarefas
 
 **Na linha da tarefa:**
-- Clique na célula de etiquetas
-- Selecione as etiquetas desejadas (múltipla seleção)
-- As etiquetas aparecem imediatamente
+- Clique na célula de labels
+- Selecione as labels desejadas (múltipla seleção)
+- As labels aparecem imediatamente
 
 **No modal da tarefa:**
 - Abra o modal da tarefa
-- Na seção "Etiquetas", clique para abrir o dropdown
-- Selecione ou desmarque etiquetas
+- Na seção "Labels", clique para abrir o dropdown
+- Selecione ou desmarque labels
 
-### 3. Visualização
+### Visualização
 
 **Na linha da tarefa:**
-- Mostra até 2 etiquetas por padrão (configurável)
-- Etiquetas adicionais são indicadas com "+N"
+- Mostra até 2 labels por padrão (configurável)
+- Labels adicionais são indicadas com "+N"
 - Cores vibrantes para fácil identificação
 
 **No modal da tarefa:**
-- Mostra até 5 etiquetas
+- Mostra até 5 labels
 - Lista completa disponível no dropdown
 
-### 4. Buscar Etiquetas
+### Buscar Labels
 
-No dropdown de etiquetas:
+No dropdown de labels:
 - Digite no campo de busca
-- Filtra etiquetas por nome
+- Filtra labels por nome
 - Busca case-insensitive
 
-### 5. Gerenciar Etiquetas
+### Gerenciar Labels
 
-**Editar etiqueta:**
+**Editar label:**
 - Atualmente não implementado (futuro)
 - Será possível editar nome e cor
 
-**Excluir etiqueta:**
+**Excluir label:**
 - Atualmente não implementado (futuro)
-- Removerá a etiqueta de todas as tarefas
+- Removerá a label de todas as tarefas
+
+## Diferenças entre os Sistemas
+
+### Status/Prioridade (Monday.com)
+- ✅ Um valor por tarefa (single-select)
+- ✅ Botões grandes e coloridos
+- ✅ Dropdown com botões grandes
+- ✅ Gerenciamento centralizado por board
+- ✅ Usado para workflow e organização principal
+
+### Labels/Tags (Trello)
+- ✅ Múltiplos valores por tarefa (multi-select)
+- ✅ Badges pequenas e compactas
+- ✅ Dropdown com checkboxes
+- ✅ Criação inline rápida
+- ✅ Usado para categorização livre e filtros
+
+## Quando Usar Cada Sistema
+
+**Use Status/Prioridade para:**
+- Workflow da tarefa (A fazer, Em progresso, Concluído)
+- Nível de urgência (Baixa, Média, Alta, Crítica)
+- Estados mutuamente exclusivos
+
+**Use Labels/Tags para:**
+- Categorias de projeto (Frontend, Backend, Design)
+- Departamentos (Marketing, Vendas, Suporte)
+- Tipos de tarefa (Bug, Feature, Melhoria)
+- Tags personalizadas e filtros customizados
 
 ## Segurança
 
@@ -97,7 +165,40 @@ No dropdown de etiquetas:
 
 ## Arquitetura
 
-### Composables
+### Sistemas de Etiquetas
+
+**1. Status e Prioridade (Monday.com)**
+
+Componentes:
+- `StatusCell.vue` - Botão de status com dropdown
+- `PriorityCell.vue` - Botão de prioridade com dropdown
+
+Composables:
+- `useTaskStatuses(boardId)` - Gerencia status do board
+- `useTaskPriorities(boardId)` - Gerencia prioridades do board
+
+Características:
+- Botões grandes coloridos (120-200px)
+- Dropdown com botões grandes (280px)
+- Single-select (um valor por tarefa)
+- Footer "Editar etiquetas" para gerenciamento
+
+**2. Labels/Tags (Trello)**
+
+Componentes:
+- `LabelsCell.vue` - Badges de labels com dropdown
+
+Composables:
+- `useLabels(boardId)` - Gerencia labels de um board (CRUD completo)
+- `useTaskLabels(taskId)` - Gerencia labels de uma tarefa específica
+
+Características:
+- Badges pequenas coloridas
+- Dropdown com checkboxes (multi-select)
+- Criação inline de novas labels
+- Busca por nome
+
+### Detalhes dos Composables
 
 **`useLabels(boardId)`**
 - Gerencia labels de um board

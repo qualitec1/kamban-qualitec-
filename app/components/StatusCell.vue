@@ -1,54 +1,79 @@
 <template>
   <div class="relative" ref="rootRef">
-    <!-- Clickable button (apenas se tiver permissão) -->
+    <!-- Botão de status estilo Monday.com -->
     <button
       v-if="canEditTasks"
       type="button"
-      class="flex items-center h-full min-w-[80px] max-w-[140px] min-h-[44px]"
+      class="w-full min-w-[120px] max-w-[200px] px-4 py-2.5 rounded-lg text-sm font-medium text-white text-center transition-all hover:opacity-90 min-h-[44px] lg:min-h-[36px]"
+      :style="{ backgroundColor: currentStatus?.color || '#94a3b8' }"
       @click="toggleDropdown"
-      :title="currentStatus?.name ?? 'Sem status'"
     >
-      <StatusBadge v-if="currentStatus" :status="currentStatus" />
-      <span v-else class="text-xs text-neutral-300 italic">—</span>
+      {{ currentStatus?.name || 'Sem status' }}
     </button>
 
     <!-- Read-only view (sem permissão) -->
     <div
       v-else
-      class="flex items-center h-full min-w-[80px] max-w-[140px] min-h-[44px] cursor-default"
-      :title="currentStatus?.name ?? 'Sem status'"
+      class="w-full min-w-[120px] max-w-[200px] px-4 py-2.5 rounded-lg text-sm font-medium text-white text-center cursor-default min-h-[44px] lg:min-h-[36px]"
+      :style="{ backgroundColor: currentStatus?.color || '#94a3b8' }"
     >
-      <StatusBadge v-if="currentStatus" :status="currentStatus" />
-      <span v-else class="text-xs text-neutral-300 italic">—</span>
+      {{ currentStatus?.name || 'Sem status' }}
     </div>
 
-    <!-- Teleport para body — evita ser cortado por overflow:hidden dos pais -->
+    <!-- Dropdown estilo Monday.com -->
     <Teleport to="body">
       <div
         v-if="open && canEditTasks"
-        class="fixed z-[9999] w-48 bg-white border border-neutral-200 rounded-lg shadow-xl py-1 max-h-64 overflow-y-auto"
+        class="fixed z-[9999] w-[280px] bg-white border border-neutral-200 rounded-xl shadow-2xl overflow-hidden"
         :style="dropdownStyle"
       >
-        <button
-          type="button"
-          class="w-full text-left px-3 py-2.5 text-xs text-neutral-500 hover:bg-neutral-50 transition-colors"
-          @mousedown.prevent="select(null)"
-        >
-          Sem status
-        </button>
-        <div class="border-t border-neutral-100 my-1" />
-        <button
-          v-for="status in statuses"
-          :key="status.id"
-          type="button"
-          class="w-full text-left px-3 py-2.5 hover:bg-neutral-50 transition-colors flex items-center gap-2"
-          @mousedown.prevent="select(status.id)"
-        >
-          <span class="w-2.5 h-2.5 rounded-full shrink-0" :style="{ backgroundColor: status.color }" />
-          <span class="text-xs text-neutral-800 truncate">{{ status.name }}</span>
-        </button>
-        <div v-if="statuses.length === 0 && !loading" class="px-3 py-2 text-xs text-neutral-400">
-          Nenhum status configurado
+        <!-- Header -->
+        <div class="px-4 py-3 border-b border-neutral-200 bg-neutral-50">
+          <h3 class="text-sm font-semibold text-neutral-700">Status</h3>
+        </div>
+
+        <!-- Lista de status -->
+        <div class="p-2 max-h-[400px] overflow-y-auto">
+          <!-- Sem status -->
+          <button
+            type="button"
+            class="w-full px-4 py-3 rounded-lg text-sm font-medium text-white text-center transition-all hover:opacity-90 mb-2"
+            style="background-color: #94a3b8"
+            @mousedown.prevent="select(null)"
+          >
+            Sem status
+          </button>
+
+          <!-- Status disponíveis -->
+          <button
+            v-for="status in statuses"
+            :key="status.id"
+            type="button"
+            class="w-full px-4 py-3 rounded-lg text-sm font-medium text-white text-center transition-all hover:opacity-90 mb-2"
+            :style="{ backgroundColor: status.color }"
+            @mousedown.prevent="select(status.id)"
+          >
+            {{ status.name }}
+          </button>
+
+          <!-- Estado vazio -->
+          <div v-if="statuses.length === 0 && !loading" class="px-4 py-6 text-center">
+            <p class="text-sm text-neutral-400">Nenhum status configurado</p>
+          </div>
+        </div>
+
+        <!-- Footer - Editar etiquetas -->
+        <div class="px-4 py-3 border-t border-neutral-200 bg-neutral-50">
+          <button
+            type="button"
+            class="w-full flex items-center justify-center gap-2 text-sm text-neutral-600 hover:text-neutral-900 transition-colors"
+            @click="openStatusManager"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+            </svg>
+            Editar etiquetas
+          </button>
         </div>
       </div>
     </Teleport>
@@ -80,11 +105,14 @@ function calcPosition() {
   const spaceBelow = window.innerHeight - rect.bottom
   const spaceRight = window.innerWidth - rect.left
 
-  const top = spaceBelow > 260 ? rect.bottom + 4 : rect.top - 264
-  const left = spaceRight >= 192 ? rect.left : rect.right - 192
+  const dropdownHeight = 400
+  const dropdownWidth = 280
+
+  const top = spaceBelow > dropdownHeight ? rect.bottom + 4 : rect.top - dropdownHeight - 4
+  const left = spaceRight >= dropdownWidth ? rect.left : rect.right - dropdownWidth
 
   dropdownStyle.value = {
-    top: `${top}px`,
+    top: `${Math.max(8, top)}px`,
     left: `${Math.max(8, left)}px`,
   }
 }
@@ -103,6 +131,12 @@ async function select(statusId: string | null) {
     await updateTaskStatus(props.taskId, statusId)
     emit('update:statusId', statusId)
   } catch { /* silently fail */ }
+}
+
+function openStatusManager() {
+  open.value = false
+  // TODO: Implementar modal de gerenciamento de status
+  console.log('Abrir gerenciador de status')
 }
 
 function onClickOutside(e: MouseEvent) {
