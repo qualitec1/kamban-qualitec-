@@ -84,11 +84,11 @@
         </template>
       </template>
 
-      <!-- Botão abrir detalhes (sempre visível) -->
+      <!-- Botão abrir detalhes -->
       <div class="flex-shrink-0 snap-start">
         <button
           type="button"
-          class="p-1.5 text-neutral-400 hover:text-primary-600 hover:bg-primary-50 rounded transition-colors opacity-0 group-hover:opacity-100"
+          class="p-1.5 text-neutral-400 hover:text-primary-600 hover:bg-primary-50 rounded transition-colors touch-manipulation lg:opacity-0 lg:group-hover:opacity-100"
           title="Abrir detalhes"
           @click="$emit('open-details', subtask.id)"
         >
@@ -102,7 +102,7 @@
       <div v-if="canEdit" class="flex-shrink-0 snap-start">
         <button
           type="button"
-          class="p-1.5 text-neutral-400 hover:text-danger-600 hover:bg-danger-50 rounded transition-colors opacity-0 group-hover:opacity-100"
+          class="p-1.5 text-neutral-400 hover:text-danger-600 hover:bg-danger-50 rounded transition-colors touch-manipulation lg:opacity-0 lg:group-hover:opacity-100"
           title="Remover subtarefa"
           @click="$emit('delete', subtask.id)"
         >
@@ -212,5 +212,16 @@ function handlePriorityUpdate(priorityId: string | null) {
 
 .touch-pan-x {
   touch-action: pan-x pan-y;
+}
+
+/* Melhorar resposta ao toque em botões */
+.touch-manipulation {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  min-width: 40px;
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 </style>
