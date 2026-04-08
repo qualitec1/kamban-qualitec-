@@ -3,6 +3,18 @@
     class="flex items-start gap-3 p-2 rounded-lg hover:bg-neutral-50 transition-colors group"
     :class="{ 'opacity-60': subtask.is_done }"
   >
+    <!-- Drag handle (apenas para editors) -->
+    <button
+      v-if="canDrag"
+      type="button"
+      class="drag-handle mt-1 p-1 text-neutral-400 hover:text-neutral-600 cursor-grab active:cursor-grabbing touch-none"
+      aria-label="Arrastar para reordenar"
+    >
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
+      </svg>
+    </button>
+
     <!-- Checkbox -->
     <input
       type="checkbox"
@@ -76,6 +88,7 @@ type Subtask = Tables<'subtasks'>
 const props = defineProps<{
   subtask: Subtask
   canEdit: boolean
+  canDrag?: boolean
 }>()
 
 const emit = defineEmits<{

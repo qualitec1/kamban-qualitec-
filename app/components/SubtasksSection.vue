@@ -40,12 +40,13 @@
     </div>
 
     <!-- Lista de subtarefas -->
-    <div v-if="subtasks.length > 0" class="space-y-2">
+    <div v-if="subtasks.length > 0" ref="subtaskListRef" class="space-y-2">
       <SubtaskItem
         v-for="subtask in sortedSubtasks"
         :key="subtask.id"
         :subtask="subtask"
         :can-edit="canEdit"
+        :can-drag="canEdit"
         @toggle="handleToggle"
         @update="handleUpdate"
         @delete="handleDelete"
@@ -60,7 +61,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useSortable } from '@vueuse/core'
 import { useSubtasks } from '~/composables/useSubtasks'
 import { useBoardPermissions } from '~/composables/useBoardPermissions'
 import SubtaskItem from '~/components/SubtaskItem.vue'
@@ -80,9 +82,11 @@ const {
   toggleSubtask,
   updateSubtask,
   deleteSubtask,
+  reorderSubtasks,
 } = useSubtasks(props.taskId)
 
 const newSubtaskTitle = ref('')
+const subtaskListRef = ref<HTMLElement | null>(null)
 
 // Debug: verificar permissões
 watch(canEdit, (value) => {
@@ -123,11 +127,25 @@ async function handleDelete(subtaskId: string) {
   await deleteSubtask(subtaskId)
 }
 
-// Carregar subtarefas e permissões ao montar
+// Configurar drag & drop
 onMounted(async () => {
   await Promise.all([
     fetchSubtasks(),
     fetchUserRole()
   ])
+  
+  // Inicializar sortable apenas se tiver permissão de edição
+  if (canEdit.value && subtaskListRef.value) {
+    useSortable(subtaskListRef.value, sortedSubtasks, {
+      animation: 150,
+      handle: '.drag-handle',
+      ghostClass: 'opacity-50',
+      dragClass: 'cursor-grabbing',
+      onEnd: async () => {
+        // Reordenar após soltar
+        await reorderSubtasks(sortedSubtasks.value)
+      }
+    })
+  }
 })
 </script>

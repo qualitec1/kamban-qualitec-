@@ -20,11 +20,6 @@ export function useAuth() {
     return useNuxtApp().$supabase as SupabaseClient
   }
 
-  function edgeFnUrl(fn: string): string {
-    const config = useRuntimeConfig()
-    return `${config.public.supabaseUrl}/functions/v1/${fn}`
-  }
-
   async function loadProfile(userId: string): Promise<void> {
     const sb = getClient()
     const { data, error } = await sb
@@ -60,17 +55,24 @@ export function useAuth() {
   async function register(email: string, password: string, fullName: string): Promise<void> {
     isLoading.value = true
     try {
-      const res = await fetch(edgeFnUrl('auth-register'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, full_name: fullName }),
+      const sb = getClient()
+      
+      // Sign up with Supabase Auth
+      const { data, error } = await sb.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+          }
+        }
       })
-      const json = await res.json()
-      if (!res.ok || res.status >= 400) {
-        throw new Error(json.error ?? 'Erro ao criar conta')
-      }
-      // After register, sign in to get session
-      await login(email, password)
+
+      if (error) throw new Error(error.message)
+      if (!data.user) throw new Error('Erro ao criar conta')
+
+      // Load profile after successful signup
+      await loadProfile(data.user.id)
     } finally {
       isLoading.value = false
     }
@@ -79,24 +81,18 @@ export function useAuth() {
   async function login(email: string, password: string): Promise<void> {
     isLoading.value = true
     try {
-      const res = await fetch(edgeFnUrl('auth-login'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      })
-      const json = await res.json()
-
-      if (!res.ok) {
-        throw new Error(json.error ?? 'Credenciais inválidas')
-      }
-
-      // Set session manually from tokens returned by edge function
       const sb = getClient()
-      const { data, error } = await sb.auth.setSession({
-        access_token: json.access_token,
-        refresh_token: json.refresh_token,
+      
+      // Sign in with Supabase Auth
+      const { data, error } = await sb.auth.signInWithPassword({
+        email,
+        password,
       })
-      if (error || !data.user) throw new Error('Credenciais inválidas')
+
+      if (error) throw new Error(error.message)
+      if (!data.user) throw new Error('Credenciais inválidas')
+
+      // Load profile after successful login
       await loadProfile(data.user.id)
     } finally {
       isLoading.value = false
@@ -116,13 +112,9 @@ export function useAuth() {
   }
 
   async function sendPasswordReset(email: string): Promise<void> {
-    await fetch(edgeFnUrl('auth-recovery'), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email,
-        redirect_to: `${window.location.origin}/reset-password`,
-      }),
+    const sb = getClient()
+    await sb.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
     })
     // Always resolves — never throws (silent lockout on server side)
   }

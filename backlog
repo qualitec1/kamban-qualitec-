@@ -1117,7 +1117,7 @@ Dependências: 2.1.11, 5.1.3.
 Critério de aceite: Subtarefa criada no modal.
 
 Prioridade: Alta.
-✅
+
 Tarefa 5.2.11 ✅ — Marcar subtarefa como concluída 
 
 Descrição curta: Atualizar progresso interno.
@@ -1130,7 +1130,7 @@ Critério de aceite: Checkbox altera estado e salva.
 
 Prioridade: Alta.
 
-Tarefa 5.2.12 — Reordenar subtarefas
+Tarefa 5.2.12 ✅ — Reordenar subtarefas
 
 Descrição curta: Alterar sequência manualmente.
 

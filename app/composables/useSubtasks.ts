@@ -138,6 +138,45 @@ export function useSubtasks(taskId: string) {
     }
   }
 
+  async function reorderSubtasks(reorderedList: Subtask[]) {
+    const oldList = [...subtasks.value]
+    
+    // Atualização otimista
+    subtasks.value = reorderedList.map((subtask, index) => ({
+      ...subtask,
+      sort_order: index
+    }))
+    
+    try {
+      // Atualizar sort_order de todas as subtarefas afetadas
+      const updates = subtasks.value.map((subtask, index) => ({
+        id: subtask.id,
+        sort_order: index
+      }))
+      
+      // Fazer updates em paralelo
+      const promises = updates.map(({ id, sort_order }) =>
+        supabase
+          .from('subtasks')
+          .update({ sort_order })
+          .eq('id', id)
+      )
+      
+      const results = await Promise.all(promises)
+      
+      // Verificar se algum update falhou
+      const errors = results.filter(r => r.error)
+      if (errors.length > 0) {
+        throw new Error('Erro ao reordenar subtarefas')
+      }
+    } catch (err: any) {
+      console.error('Erro ao reordenar subtarefas:', err)
+      // Reverter otimismo
+      subtasks.value = oldList
+      error.value = err.message
+    }
+  }
+
   return {
     subtasks,
     loading,
@@ -148,5 +187,6 @@ export function useSubtasks(taskId: string) {
     toggleSubtask,
     updateSubtask,
     deleteSubtask,
+    reorderSubtasks,
   }
 }
