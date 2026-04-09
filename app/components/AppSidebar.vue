@@ -1,11 +1,13 @@
 <template>
   <aside
+    ref="sidebarRef"
     :class="[
-      'flex flex-col bg-primary shrink-0 transition-all duration-[300ms] overflow-hidden z-50 relative',
+      'flex flex-col bg-primary shrink-0 transition-all duration-[300ms] overflow-hidden relative',
       isMobile
-        ? ['fixed inset-y-0 left-0', isOpen ? 'w-64' : 'w-0']
-        : [isOpen ? 'w-64' : 'w-16']
+        ? ['fixed inset-y-0 left-0 z-50', isOpen ? 'w-[80vw] max-w-[320px]' : 'w-0']
+        : [isOpen ? 'w-64' : 'w-16', 'z-40']
     ]"
+    :style="isMobile && isOpen ? { paddingTop: 'env(safe-area-inset-top)' } : {}"
   >
     <!-- Botão de collapse (desktop only) -->
     <button
@@ -30,10 +32,11 @@
     <!-- Logo -->
     <div class="flex items-center gap-3 px-4 h-14 border-b border-primary-600 shrink-0">
       <img src="/images/logo_qualitec.png" alt="Qualitec" class="h-8 object-contain shrink-0" />
+      <span v-if="isOpen && isMobile" class="text-white font-semibold text-lg">Qualitec</span>
     </div>
 
     <!-- Nav -->
-    <nav class="flex-1 overflow-y-auto py-3 px-2 space-y-4 scrollbar-hide">
+    <nav class="flex-1 overflow-y-auto py-3 px-2 space-y-4 scrollbar-hide touch-pan-y">
       
       <!-- Main navigation -->
       <div class="space-y-0.5">
@@ -42,6 +45,7 @@
           :key="item.to"
           :item="item"
           :collapsed="!isOpen"
+          :is-mobile="isMobile"
           @navigate="$emit('navigate')"
         />
       </div>
@@ -51,11 +55,11 @@
         <div class="px-3 py-1.5 flex items-center justify-between">
           <span class="text-white/50 text-xs font-medium uppercase tracking-wider">Áreas</span>
           <button
-            class="w-5 h-5 flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 rounded transition-colors"
+            class="min-w-[44px] min-h-[44px] w-8 h-8 flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 rounded transition-colors touch-manipulation"
             aria-label="Adicionar área"
             @click="$emit('add-workspace')"
           >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
             </svg>
           </button>
@@ -66,6 +70,7 @@
             :key="ws.id"
             :item="{ label: ws.name, to: `/workspaces/${ws.slug}`, icon: 'folder' }"
             :collapsed="false"
+            :is-mobile="isMobile"
             @navigate="$emit('navigate')"
           />
           <div v-if="(workspaces ?? []).length === 0" class="px-3 py-2 text-white/40 text-xs">
@@ -85,6 +90,7 @@
             :key="fav.id"
             :item="{ label: fav.name, to: `/boards/${fav.id}`, icon: 'star' }"
             :collapsed="false"
+            :is-mobile="isMobile"
             @navigate="$emit('navigate')"
           />
           <div v-if="(favorites ?? []).length === 0" class="px-3 py-2 text-white/40 text-xs">
@@ -104,6 +110,7 @@
             :key="rec.id"
             :item="{ label: rec.name, to: `/boards/${rec.id}`, icon: 'clock' }"
             :collapsed="false"
+            :is-mobile="isMobile"
             @navigate="$emit('navigate')"
           />
           <div v-if="(recents ?? []).length === 0" class="px-3 py-2 text-white/40 text-xs">
@@ -137,10 +144,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useAuth } from '~/composables/useAuth'
 
-defineProps<{
+const props = defineProps<{
   isOpen: boolean
   isMobile: boolean
   workspaces?: Array<{ id: string; name: string; slug: string }>
@@ -148,7 +155,7 @@ defineProps<{
   recents?: Array<{ id: string; name: string }>
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   'add-workspace': []
   'user-menu': []
   'navigate': []
@@ -156,6 +163,50 @@ defineEmits<{
 }>()
 
 const { user } = useAuth()
+const sidebarRef = ref<HTMLElement | null>(null)
+
+// Touch swipe detection for mobile
+let touchStartX = 0
+let touchStartY = 0
+let touchEndX = 0
+let touchEndY = 0
+
+function handleTouchStart(e: TouchEvent) {
+  if (!props.isMobile || !props.isOpen) return
+  touchStartX = e.changedTouches[0].screenX
+  touchStartY = e.changedTouches[0].screenY
+}
+
+function handleTouchEnd(e: TouchEvent) {
+  if (!props.isMobile || !props.isOpen) return
+  touchEndX = e.changedTouches[0].screenX
+  touchEndY = e.changedTouches[0].screenY
+  handleSwipe()
+}
+
+function handleSwipe() {
+  const deltaX = touchEndX - touchStartX
+  const deltaY = Math.abs(touchEndY - touchStartY)
+  
+  // Swipe right to close (horizontal swipe > 50px and vertical < 30px)
+  if (deltaX > 50 && deltaY < 30) {
+    emit('toggle')
+  }
+}
+
+onMounted(() => {
+  if (sidebarRef.value) {
+    sidebarRef.value.addEventListener('touchstart', handleTouchStart, { passive: true })
+    sidebarRef.value.addEventListener('touchend', handleTouchEnd, { passive: true })
+  }
+})
+
+onUnmounted(() => {
+  if (sidebarRef.value) {
+    sidebarRef.value.removeEventListener('touchstart', handleTouchStart)
+    sidebarRef.value.removeEventListener('touchend', handleTouchEnd)
+  }
+})
 
 const mainItems = [
   { label: 'Início',        to: '/',             icon: 'home' },
@@ -182,5 +233,16 @@ const userInitials = computed(() => {
 }
 .scrollbar-hide::-webkit-scrollbar {
   display: none;  /* Chrome, Safari and Opera */
+}
+
+/* Touch-friendly interactions */
+.touch-manipulation {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.touch-pan-y {
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
 }
 </style>

@@ -1,20 +1,23 @@
 <template>
-  <header class="shrink-0 flex items-center gap-4 h-14 bg-white border-b border-neutral-100 px-4 shadow-sm">
+  <header 
+    class="shrink-0 flex items-center gap-2 sm:gap-4 h-14 bg-white border-b border-neutral-100 px-3 sm:px-4 shadow-sm"
+    :style="{ paddingTop: 'env(safe-area-inset-top)' }"
+  >
 
-    <!-- Toggle sidebar -->
+    <!-- Toggle sidebar (mobile hamburger 44px touch target) -->
     <button
       @click="$emit('toggle-sidebar')"
-      class="flex items-center justify-center w-9 h-9 rounded-xl text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900 transition-colors duration-[150ms]"
+      class="flex items-center justify-center min-w-[44px] min-h-[44px] w-11 h-11 rounded-xl text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900 transition-colors duration-[150ms] touch-manipulation -ml-1"
       aria-label="Alternar menu"
     >
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
         <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
       </svg>
     </button>
 
     <!-- Page title -->
     <div class="flex-1 min-w-0">
-      <h1 class="text-headline text-strong truncate">
+      <h1 class="text-base sm:text-lg font-semibold text-neutral-900 truncate">
         <slot name="title">Início</slot>
       </h1>
     </div>
@@ -33,7 +36,7 @@
     </div>
 
     <!-- Actions -->
-    <div class="flex items-center gap-1.5">
+    <div class="flex items-center gap-1">
 
       <!-- Notificações -->
       <NotificationsPanel />
@@ -42,16 +45,16 @@
       <div class="relative" ref="menuRef">
         <button
           @click="menuOpen = !menuOpen"
-          class="flex items-center gap-2 pl-1 pr-2 py-1 rounded-xl hover:bg-neutral-100 transition-colors duration-[150ms]"
+          class="flex items-center gap-1.5 sm:gap-2 pl-0.5 sm:pl-1 pr-1 sm:pr-2 py-1 rounded-xl hover:bg-neutral-100 transition-colors duration-[150ms] min-w-[44px] min-h-[44px] touch-manipulation"
           aria-label="Menu do usuário"
           :aria-expanded="menuOpen"
         >
-          <div class="w-7 h-7 rounded-full bg-secondary flex items-center justify-center shrink-0">
+          <div class="w-8 h-8 sm:w-7 sm:h-7 rounded-full bg-secondary flex items-center justify-center shrink-0">
             <span class="text-white text-xs font-semibold">{{ initials }}</span>
           </div>
-          <span class="hidden md:block text-label-sm text-default max-w-[120px] truncate">{{ displayName }}</span>
+          <span class="hidden sm:block text-label-sm text-default max-w-[120px] truncate">{{ displayName }}</span>
           <svg
-            class="hidden md:block w-3.5 h-3.5 text-neutral-400 transition-transform duration-[150ms]"
+            class="hidden sm:block w-3.5 h-3.5 text-neutral-400 transition-transform duration-[150ms]"
             :class="menuOpen ? 'rotate-180' : ''"
             fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true"
           >
@@ -63,7 +66,7 @@
         <Transition name="dropdown">
           <div
             v-if="menuOpen"
-            class="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-lg border border-neutral-100 py-1 z-50"
+            class="absolute right-0 top-full mt-2 w-64 sm:w-56 bg-white rounded-xl shadow-lg border border-neutral-100 py-1 z-50"
             role="menu"
           >
             <!-- Info do usuário -->
@@ -80,20 +83,20 @@
             <!-- Ações -->
             <div class="py-1">
               <button
-                class="w-full flex items-center gap-3 px-4 py-2.5 text-label-sm text-default hover:bg-neutral-50 transition-colors duration-[150ms]"
+                class="w-full flex items-center gap-3 px-4 py-3 sm:py-2.5 text-label-sm text-default hover:bg-neutral-50 transition-colors duration-[150ms] touch-manipulation"
                 role="menuitem"
               >
-                <svg class="w-4 h-4 text-neutral-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                <svg class="w-5 h-5 sm:w-4 sm:h-4 text-neutral-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
                 Meu perfil
               </button>
 
               <button
-                class="w-full flex items-center gap-3 px-4 py-2.5 text-label-sm text-default hover:bg-neutral-50 transition-colors duration-[150ms]"
+                class="w-full flex items-center gap-3 px-4 py-3 sm:py-2.5 text-label-sm text-default hover:bg-neutral-50 transition-colors duration-[150ms] touch-manipulation"
                 role="menuitem"
               >
-                <svg class="w-4 h-4 text-neutral-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                <svg class="w-5 h-5 sm:w-4 sm:h-4 text-neutral-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                   <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
@@ -105,11 +108,11 @@
               <button
                 @click="handleLogout"
                 :disabled="isLoading"
-                class="w-full flex items-center gap-3 px-4 py-2.5 text-label-sm transition-colors duration-[150ms] disabled:opacity-50"
+                class="w-full flex items-center gap-3 px-4 py-3 sm:py-2.5 text-label-sm transition-colors duration-[150ms] disabled:opacity-50 touch-manipulation"
                 style="color: var(--color-error-600);"
                 role="menuitem"
               >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                <svg class="w-5 h-5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                 </svg>
                 {{ isLoading ? 'Saindo...' : 'Sair da conta' }}
@@ -168,5 +171,11 @@ onUnmounted(() => document.removeEventListener('mousedown', onClickOutside))
 .dropdown-leave-to {
   opacity: 0;
   transform: translateY(-4px);
+}
+
+/* Touch-friendly buttons */
+.touch-manipulation {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 </style>

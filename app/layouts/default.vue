@@ -1,12 +1,14 @@
 <template>
-  <div class="flex h-screen overflow-hidden bg-neutral-50">
+  <div class="flex h-screen overflow-hidden bg-neutral-50" :style="{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }">
 
     <!-- Overlay mobile -->
     <Transition name="fade">
       <div
         v-if="sidebarOpen && isMobile"
-        class="fixed inset-0 z-40 bg-neutral-900/40 backdrop-blur-sm"
-        @click="sidebarOpen = false"
+        class="fixed inset-0 z-40 bg-neutral-900/50 backdrop-blur-sm"
+        @click="closeSidebar"
+        @touchstart.passive="handleOverlayTouchStart"
+        @touchend.passive="handleOverlayTouchEnd"
         aria-hidden="true"
       />
     </Transition>
@@ -87,6 +89,27 @@ function toggleSidebar() {
   }
 }
 
+function closeSidebar() {
+  sidebarOpen.value = false
+}
+
+// Touch swipe detection for overlay
+let overlayTouchStartX = 0
+
+function handleOverlayTouchStart(e: TouchEvent) {
+  overlayTouchStartX = e.changedTouches[0].screenX
+}
+
+function handleOverlayTouchEnd(e: TouchEvent) {
+  const touchEndX = e.changedTouches[0].screenX
+  const deltaX = touchEndX - overlayTouchStartX
+  
+  // Swipe right to close
+  if (deltaX > 50) {
+    closeSidebar()
+  }
+}
+
 function handleKeyboard(e: KeyboardEvent) {
   // Ctrl + . para toggle sidebar (igual Monday.com)
   if (e.ctrlKey && e.key === '.') {
@@ -109,7 +132,7 @@ function handleUserMenu() {
 function handleNavigate() {
   // Close sidebar on mobile after navigation
   if (isMobile.value) {
-    sidebarOpen.value = false
+    closeSidebar()
   }
 }
 

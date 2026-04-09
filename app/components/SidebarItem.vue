@@ -1,7 +1,7 @@
 <template>
   <NuxtLink
     :to="item.to"
-    class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-white/70 hover:text-white hover:bg-white/10 transition-all duration-[150ms] group min-h-[44px] relative"
+    class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-white/70 hover:text-white hover:bg-white/10 transition-all duration-[150ms] group min-h-[44px] relative touch-manipulation"
     active-class="!text-white bg-white/15"
     :title="collapsed ? item.label : undefined"
     @click="handleClick"
@@ -61,12 +61,19 @@
 const props = defineProps<{
   item: { label: string; to: string; icon: string }
   collapsed: boolean
+  isMobile?: boolean
 }>()
 
 const emit = defineEmits<{ navigate: [] }>()
 
 function handleClick() {
-  console.log('SidebarItem clicked:', props.item.to)
   emit('navigate')
 }
 </script>
+
+<style scoped>
+.touch-manipulation {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+</style>
