@@ -1,11 +1,36 @@
 <template>
   <div 
     class="border-b border-neutral-100 hover:bg-blue-50/30 relative group"
-    :class="{ 'bg-blue-50/50': isSelected }"
+    :class="{ 
+      'bg-blue-50/50': isSelected,
+      'opacity-50': isDragging,
+      'border-t-2 border-t-primary-500': isDropTarget
+    }"
+    :data-subtask-id="subtask.id"
+    draggable="true"
+    @dragstart="handleDragStart"
+    @dragend="handleDragEnd"
+    @dragover.prevent="handleDragOver"
+    @dragleave="handleDragLeave"
+    @drop="handleDrop"
+    @touchstart="handleTouchStart"
+    @touchmove="handleTouchMove"
+    @touchend="handleTouchEnd"
   >
     <!-- Scroll horizontal em mobile -->
     <div class="flex items-center gap-2 px-4 py-2.5 min-h-[44px] overflow-x-auto overflow-y-visible scrollbar-mobile snap-x snap-mandatory touch-pan-x">
       
+      <!-- Drag handle -->
+      <div class="flex-shrink-0 snap-start cursor-move touch-manipulation" title="Arrastar para reordenar">
+        <svg class="w-4 h-4 text-neutral-400 hover:text-neutral-600" fill="currentColor" viewBox="0 0 16 16">
+          <circle cx="4" cy="3" r="1.5" />
+          <circle cx="4" cy="8" r="1.5" />
+          <circle cx="4" cy="13" r="1.5" />
+          <circle cx="12" cy="3" r="1.5" />
+          <circle cx="12" cy="8" r="1.5" />
+          <circle cx="12" cy="13" r="1.5" />
+        </svg>
+      </div>
       <!-- Checkbox -->
       <div class="flex-shrink-0 snap-start">
         <input
@@ -133,6 +158,7 @@ const emit = defineEmits<{
   (e: 'update-field', id: string, field: string, value: unknown): void
   (e: 'delete', id: string): void
   (e: 'open-details', id: string): void
+  (e: 'reorder', fromId: string, toId: string): void
 }>()
 
 const { orderedColumns, isVisible } = useBoardColumns(props.boardId)
@@ -140,6 +166,13 @@ const { orderedColumns, isVisible } = useBoardColumns(props.boardId)
 const isEditingTitle = ref(false)
 const localTitle = ref(props.subtask.title)
 const titleInputRef = ref<HTMLInputElement | null>(null)
+
+// Estados para drag and drop
+const isDragging = ref(false)
+const isDropTarget = ref(false)
+const touchStartY = ref(0)
+const touchStartTime = ref(0)
+const isTouchDragging = ref(false)
 
 // Estados reativos locais para atualização otimista
 const localStatusId = ref(props.subtask.status_id)
@@ -198,6 +231,119 @@ function handlePriorityUpdate(priorityId: string | null) {
   localPriorityId.value = priorityId
   // Emitir para salvar no servidor em background
   emit('update-field', props.subtask.id, 'priority_id', priorityId)
+}
+
+// Drag and Drop handlers (Desktop)
+function handleDragStart(e: DragEvent) {
+  if (!props.canEdit) {
+    e.preventDefault()
+    return
+  }
+  
+  isDragging.value = true
+  if (e.dataTransfer) {
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/plain', props.subtask.id)
+  }
+}
+
+function handleDragEnd() {
+  isDragging.value = false
+  isDropTarget.value = false
+}
+
+function handleDragOver(e: DragEvent) {
+  if (!props.canEdit) return
+  
+  e.preventDefault()
+  if (e.dataTransfer) {
+    e.dataTransfer.dropEffect = 'move'
+  }
+  isDropTarget.value = true
+}
+
+function handleDragLeave() {
+  isDropTarget.value = false
+}
+
+function handleDrop(e: DragEvent) {
+  if (!props.canEdit) return
+  
+  e.preventDefault()
+  isDropTarget.value = false
+  
+  const draggedId = e.dataTransfer?.getData('text/plain')
+  if (draggedId && draggedId !== props.subtask.id) {
+    emit('reorder', draggedId, props.subtask.id)
+  }
+}
+
+// Touch handlers (Mobile)
+function handleTouchStart(e: TouchEvent) {
+  if (!props.canEdit) return
+  
+  const touch = e.touches[0]
+  if (!touch) return
+  
+  touchStartY.value = touch.clientY
+  touchStartTime.value = Date.now()
+  
+  // Detectar se é um long press (500ms)
+  setTimeout(() => {
+    const timeDiff = Date.now() - touchStartTime.value
+    if (timeDiff >= 500 && !isTouchDragging.value) {
+      isTouchDragging.value = true
+      isDragging.value = true
+      
+      // Feedback háptico se disponível
+      if ('vibrate' in navigator) {
+        navigator.vibrate(50)
+      }
+    }
+  }, 500)
+}
+
+function handleTouchMove(e: TouchEvent) {
+  if (!isTouchDragging.value || !props.canEdit) return
+  
+  e.preventDefault()
+  
+  const touch = e.touches[0]
+  if (!touch) return
+  
+  // Encontrar elemento sob o toque
+  const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY)
+  const subtaskRow = elementBelow?.closest('[data-subtask-id]')
+  
+  if (subtaskRow) {
+    const targetId = subtaskRow.getAttribute('data-subtask-id')
+    if (targetId && targetId !== props.subtask.id) {
+      isDropTarget.value = true
+    }
+  }
+}
+
+function handleTouchEnd(e: TouchEvent) {
+  if (!isTouchDragging.value || !props.canEdit) return
+  
+  const touch = e.changedTouches[0]
+  if (!touch) return
+  
+  // Encontrar elemento sob o toque
+  const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY)
+  const subtaskRow = elementBelow?.closest('[data-subtask-id]')
+  
+  if (subtaskRow) {
+    const targetId = subtaskRow.getAttribute('data-subtask-id')
+    if (targetId && targetId !== props.subtask.id) {
+      emit('reorder', props.subtask.id, targetId)
+    }
+  }
+  
+  // Reset states
+  isTouchDragging.value = false
+  isDragging.value = false
+  isDropTarget.value = false
 }
 </script>
 

@@ -24,7 +24,11 @@
     </div>
 
     <!-- Lista de subtarefas -->
-    <div v-if="subtasks.length > 0">
+    <TransitionGroup
+      v-if="subtasks.length > 0"
+      name="subtask-list"
+      tag="div"
+    >
       <SubtaskRow
         v-for="subtask in sortedSubtasks"
         :key="subtask.id"
@@ -37,8 +41,9 @@
         @update-field="handleUpdateField"
         @delete="handleDelete"
         @open-details="handleOpenDetails"
+        @reorder="handleReorder"
       />
-    </div>
+    </TransitionGroup>
 
     <!-- Input para criar nova subtarefa -->
     <div class="flex items-center gap-2 px-4 py-2.5 border-t border-neutral-200">
@@ -166,6 +171,57 @@ async function handleUpdateField(subtaskId: string, field: string, value: unknow
   await updateSubtask(subtaskId, { [field]: value })
 }
 
+async function handleReorder(fromId: string, toId: string) {
+  console.log('[SubtasksTable] Reordering:', { fromId, toId })
+  
+  // Encontrar índices no array ordenado
+  const sortedList = sortedSubtasks.value
+  const fromIndex = sortedList.findIndex(s => s.id === fromId)
+  const toIndex = sortedList.findIndex(s => s.id === toId)
+  
+  if (fromIndex === -1 || toIndex === -1) return
+  
+  // Criar novo array reordenado
+  const newList = [...sortedList]
+  const [movedItem] = newList.splice(fromIndex, 1)
+  newList.splice(toIndex, 0, movedItem)
+  
+  // Atualizar sort_order baseado na nova posição
+  const updates = newList.map((subtask, index) => {
+    const originalSubtask = subtasks.value.find(s => s.id === subtask.id)
+    if (originalSubtask) {
+      originalSubtask.sort_order = index
+    }
+    return {
+      id: subtask.id,
+      sort_order: index
+    }
+  })
+  
+  // Forçar atualização reativa
+  subtasks.value = [...subtasks.value]
+  
+  console.log('[SubtasksTable] Updated sort orders:', updates)
+  
+  // Salvar no servidor em background
+  try {
+    const supabase = useNuxtApp().$supabase as any
+    
+    for (const update of updates) {
+      await supabase
+        .from('subtasks')
+        .update({ sort_order: update.sort_order })
+        .eq('id', update.id)
+    }
+    
+    console.log('[SubtasksTable] Reorder saved successfully')
+  } catch (error) {
+    console.error('[SubtasksTable] Error saving reorder:', error)
+    // Recarregar em caso de erro
+    await fetchSubtasks()
+  }
+}
+
 async function handleDelete(subtaskId: string) {
   if (confirm('Tem certeza que deseja remover esta subtarefa?')) {
     await deleteSubtask(subtaskId)
@@ -226,5 +282,38 @@ onMounted(async () => {
   .scrollbar-mobile::-webkit-scrollbar {
     display: none;
   }
+}
+</style>
+
+
+<style scoped>
+/* Animações de transição para reordenação - estilo Monday.com */
+.subtask-list-move {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.subtask-list-enter-active {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.subtask-list-leave-active {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: absolute;
+  width: 100%;
+}
+
+.subtask-list-enter-from {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+.subtask-list-leave-to {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+/* Garantir que os itens em movimento não sejam afetados por outros */
+.subtask-list-leave-active {
+  z-index: 0;
 }
 </style>

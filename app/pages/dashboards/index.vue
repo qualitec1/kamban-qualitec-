@@ -173,16 +173,6 @@ const defaultWidgets = [
     label: 'datas com tarefas',
     valueColor: 'text-orange-600',
     position: { x: 340, y: 240, width: 300, height: 200, zIndex: 1 }
-  },
-  {
-    id: 'widget-5',
-    title: 'Carregando...',
-    size: 'full' as const,
-    loading: true,
-    value: 0,
-    label: '',
-    valueColor: 'text-neutral-600',
-    position: { x: 660, y: 20, width: 620, height: 420, zIndex: 1 }
   }
 ]
 
@@ -195,15 +185,24 @@ function loadWidgetPositions() {
   try {
     const saved = localStorage.getItem('dashboard-widget-positions')
     if (saved) {
-      const savedPositions = JSON.parse(saved)
+      const savedData = JSON.parse(saved)
+      
+      // Se há uma lista de IDs salvos, filtrar apenas os widgets que não foram excluídos
+      if (savedData.widgetIds) {
+        widgetsList.value = defaultWidgets.filter(widget => 
+          savedData.widgetIds.includes(widget.id)
+        )
+      }
       
       // Atualizar posições dos widgets existentes
-      widgetsList.value.forEach(widget => {
-        const savedWidget = savedPositions.find((w: any) => w.id === widget.id)
-        if (savedWidget && savedWidget.position) {
-          widget.position = { ...savedWidget.position }
-        }
-      })
+      if (savedData.positions) {
+        widgetsList.value.forEach(widget => {
+          const savedPosition = savedData.positions.find((p: any) => p.id === widget.id)
+          if (savedPosition && savedPosition.position) {
+            widget.position = { ...savedPosition.position }
+          }
+        })
+      }
       
       console.log('[dashboards/index] Widget positions loaded from localStorage')
     }
@@ -217,12 +216,15 @@ function saveWidgetPositions() {
   if (import.meta.server) return
   
   try {
-    const positions = widgetsList.value.map(w => ({
-      id: w.id,
-      position: w.position
-    }))
+    const data = {
+      widgetIds: widgetsList.value.map(w => w.id),
+      positions: widgetsList.value.map(w => ({
+        id: w.id,
+        position: w.position
+      }))
+    }
     
-    localStorage.setItem('dashboard-widget-positions', JSON.stringify(positions))
+    localStorage.setItem('dashboard-widget-positions', JSON.stringify(data))
     console.log('[dashboards/index] Widget positions saved to localStorage')
   } catch (error) {
     console.error('[dashboards/index] Error saving widget positions:', error)

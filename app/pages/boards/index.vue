@@ -160,6 +160,15 @@
               </svg>
               Template
             </button>
+            <button
+              @click.stop="deletingBoardId = board.id"
+              class="flex items-center justify-center gap-1.5 px-2 text-label-sm text-red-600 hover:text-red-700 font-medium transition-colors"
+              title="Excluir quadro"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
           </div>
         </div>
       </div>
@@ -193,6 +202,26 @@
           <BaseButton type="submit" variant="primary">Salvar template</BaseButton>
         </div>
       </form>
+    </BaseModal>
+
+    <!-- Modal de confirmação de exclusão -->
+    <BaseModal v-model="showDeleteModal" title="Excluir quadro?" size="sm">
+      <div class="space-y-4">
+        <p class="text-body-sm text-default">
+          Tem certeza que deseja excluir o quadro <span class="font-semibold">"{{ boards.find(b => b.id === deletingBoardId)?.name }}"</span>?
+        </p>
+        <p class="text-body-sm text-muted">
+          Esta ação não pode ser desfeita. Todas as tarefas, grupos e dados relacionados serão permanentemente removidos.
+        </p>
+      </div>
+      <template #footer>
+        <div class="flex gap-3 justify-end">
+          <BaseButton variant="ghost" @click="showDeleteModal = false">Cancelar</BaseButton>
+          <BaseButton variant="danger" @click="handleDeleteBoard" :disabled="loading">
+            {{ loading ? 'Excluindo...' : 'Excluir quadro' }}
+          </BaseButton>
+        </div>
+      </template>
     </BaseModal>
 
     <!-- Modal criar quadro -->
@@ -242,7 +271,7 @@ import { useBoardTemplates } from '~/composables/useBoardTemplates'
 import { useAuth } from '~/composables/useAuth'
 import type { Database } from '#shared/types/database'
 
-const { boards, loading, error, fetchBoards, createBoard } = useBoards()
+const { boards, loading, error, fetchBoards, createBoard, deleteBoard } = useBoards()
 const { workspaces, fetchWorkspaces } = useWorkspaces()
 const { orgUsers, fetchOrgUsers } = useBoardGuests()
 const { templates, fetchTemplates, saveAsTemplate, createFromTemplate } = useBoardTemplates()
@@ -252,6 +281,7 @@ const showCreateModal = ref(false)
 const selectedWorkspace = ref<string | null>(null)
 const managingBoardId = ref<string | null>(null)
 const savingAsTemplate = ref<string | null>(null)
+const deletingBoardId = ref<string | null>(null)
 const showHelp = ref(true)
 
 const showGuestModal = computed({
@@ -261,6 +291,10 @@ const showGuestModal = computed({
 const showSaveTemplateModal = computed({
   get: () => savingAsTemplate.value !== null,
   set: (v) => { if (!v) savingAsTemplate.value = null }
+})
+const showDeleteModal = computed({
+  get: () => deletingBoardId.value !== null,
+  set: (v) => { if (!v) deletingBoardId.value = null }
 })
 
 const form = ref({
@@ -316,6 +350,18 @@ async function handleSaveAsTemplate() {
   const ok = await saveAsTemplate({ boardId: savingAsTemplate.value, name: templateForm.value.name.trim(), description: templateForm.value.description.trim() || undefined, isPublic: templateForm.value.is_public })
   if (ok) { savingAsTemplate.value = null; templateForm.value = { name: '', description: '', is_public: false }; formErrors.value.template_name = '' }
   else { formErrors.value.template_name = 'Erro ao salvar template.' }
+}
+
+async function handleDeleteBoard() {
+  if (!deletingBoardId.value) return
+  
+  const success = await deleteBoard(deletingBoardId.value)
+  
+  if (success) {
+    deletingBoardId.value = null
+  } else {
+    formErrors.value.general = 'Erro ao excluir quadro. Tente novamente.'
+  }
 }
 
 async function loadBoards() { await fetchBoards() }

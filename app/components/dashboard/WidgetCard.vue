@@ -74,7 +74,7 @@
         </button>
 
         <!-- Menu (três pontos) -->
-        <div class="relative">
+        <div class="relative" ref="menuButtonRef">
           <button
             type="button"
             class="min-w-[32px] min-h-[32px] w-8 h-8 flex items-center justify-center text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 rounded transition-colors"
@@ -88,20 +88,23 @@
             </svg>
           </button>
 
-          <!-- Dropdown menu -->
-          <Transition
-            enter-active-class="transition ease-out duration-100"
-            enter-from-class="transform opacity-0 scale-95"
-            enter-to-class="transform opacity-100 scale-100"
-            leave-active-class="transition ease-in duration-75"
-            leave-from-class="transform opacity-100 scale-100"
-            leave-to-class="transform opacity-0 scale-95"
-          >
-            <div
-              v-if="showMenu"
-              class="absolute right-0 top-full mt-1 w-56 bg-white rounded-lg shadow-lg border border-neutral-200 py-2 z-50"
-              @click.stop
+          <!-- Dropdown menu com Teleport -->
+          <Teleport to="body">
+            <Transition
+              enter-active-class="transition ease-out duration-100"
+              enter-from-class="transform opacity-0 scale-95"
+              enter-to-class="transform opacity-100 scale-100"
+              leave-active-class="transition ease-in duration-75"
+              leave-from-class="transform opacity-100 scale-100"
+              leave-to-class="transform opacity-0 scale-95"
             >
+              <div
+                v-if="showMenu"
+                ref="menuDropdownRef"
+                class="fixed bg-white rounded-lg shadow-lg border border-neutral-200 py-2 z-[9999] w-56"
+                :style="menuPosition"
+                @click.stop
+              >
               <!-- Tela cheia -->
               <button
                 type="button"
@@ -196,6 +199,7 @@
               </button>
             </div>
           </Transition>
+        </Teleport>
         </div>
       </div>
     </div>
@@ -256,6 +260,9 @@ const isRenaming = ref(false)
 const currentTitle = ref(props.title)
 const editableTitle = ref(props.title)
 const titleInput = ref<HTMLInputElement | null>(null)
+const menuButtonRef = ref<HTMLElement | null>(null)
+const menuDropdownRef = ref<HTMLElement | null>(null)
+const menuPosition = ref<Record<string, string>>({})
 
 function handleClick() {
   isSelected.value = !isSelected.value
@@ -264,6 +271,32 @@ function handleClick() {
 
 function toggleMenu() {
   showMenu.value = !showMenu.value
+  
+  if (showMenu.value && menuButtonRef.value) {
+    // Calcular posição do menu
+    const rect = menuButtonRef.value.getBoundingClientRect()
+    const menuWidth = 224 // w-56 = 14rem = 224px
+    const menuHeight = 400 // altura aproximada do menu
+    
+    // Verificar espaço disponível
+    const spaceBelow = window.innerHeight - rect.bottom
+    const spaceRight = window.innerWidth - rect.right
+    
+    // Posicionar abaixo ou acima
+    const top = spaceBelow > menuHeight 
+      ? rect.bottom + 4 
+      : rect.top - menuHeight - 4
+    
+    // Posicionar à direita ou à esquerda
+    const left = spaceRight > menuWidth
+      ? rect.right - menuWidth
+      : rect.left
+    
+    menuPosition.value = {
+      top: `${Math.max(8, top)}px`,
+      left: `${Math.max(8, Math.min(left, window.innerWidth - menuWidth - 8))}px`
+    }
+  }
 }
 
 function handleFullscreen() {
@@ -337,7 +370,11 @@ function handleDelete() {
 // Fechar menu ao clicar fora
 function handleClickOutside(event: MouseEvent) {
   const target = event.target as HTMLElement
-  if (!target.closest('.relative')) {
+  if (showMenu.value && 
+      menuButtonRef.value && 
+      !menuButtonRef.value.contains(target) &&
+      menuDropdownRef.value &&
+      !menuDropdownRef.value.contains(target)) {
     showMenu.value = false
   }
 }

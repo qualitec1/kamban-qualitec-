@@ -142,5 +142,27 @@ export function useTasks() {
     }
   }
 
-  return { createTask, reorderTasks, moveTaskToGroup }
+  async function deleteTask(taskId: string): Promise<boolean> {
+    try {
+      console.log('[useTasks] Deleting task:', taskId)
+      
+      const { error } = await supabase
+        .from('tasks')
+        .delete()
+        .eq('id', taskId)
+
+      if (error) {
+        console.error('[useTasks] Error deleting task:', error)
+        throw error
+      }
+
+      console.log('[useTasks] Task deleted successfully')
+      return true
+    } catch (error: any) {
+      console.error('[useTasks] Error deleting task:', error)
+      return false
+    }
+  }
+
+  return { createTask, reorderTasks, moveTaskToGroup, deleteTask }
 }

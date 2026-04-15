@@ -4,7 +4,7 @@
       type="button"
       class="flex items-center gap-1 text-xs text-neutral-500 hover:text-primary-600 transition-colors whitespace-nowrap min-h-[44px]"
       :title="tooltip"
-      @click="toggleOpen"
+      @click.stop="toggleOpen"
     >
       <svg class="w-3.5 h-3.5 shrink-0 text-neutral-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -17,6 +17,7 @@
     <Teleport to="body">
       <div
         v-if="open"
+        ref="popoverRef"
         class="fixed z-[9999] bg-white border border-neutral-200 rounded-xl shadow-xl p-4 w-72"
         :style="popoverStyle"
       >
@@ -69,7 +70,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 
 const props = defineProps<{
   taskId: string
@@ -85,6 +86,7 @@ const emit = defineEmits<{
 const supabase = useNuxtApp().$supabase as any
 const open = ref(false)
 const rootRef = ref<HTMLElement | null>(null)
+const popoverRef = ref<HTMLElement | null>(null)
 const popoverStyle = ref<Record<string, string>>({})
 const draftStart = ref(props.startDate ?? '')
 const draftEnd = ref(props.endDate ?? '')
@@ -108,10 +110,15 @@ function calcPosition() {
 }
 
 function toggleOpen() {
-  draftStart.value = props.startDate ?? ''
-  draftEnd.value = props.endDate ?? ''
-  calcPosition()
-  open.value = !open.value
+  if (!open.value) {
+    draftStart.value = props.startDate ?? ''
+    draftEnd.value = props.endDate ?? ''
+    open.value = true
+    // Aguarda o próximo tick para calcular a posição após o DOM ser atualizado
+    nextTick(() => calcPosition())
+  } else {
+    open.value = false
+  }
 }
 
 function fmt(d: string | null): string {
@@ -166,9 +173,25 @@ async function clear() {
 }
 
 function onClickOutside(e: MouseEvent) {
-  if (rootRef.value && !rootRef.value.contains(e.target as Node)) open.value = false
+  const target = e.target as Node
+  if (!rootRef.value?.contains(target) && !popoverRef.value?.contains(target)) {
+    open.value = false
+  }
 }
 
-onMounted(() => document.addEventListener('mousedown', onClickOutside))
-onUnmounted(() => document.removeEventListener('mousedown', onClickOutside))
+function onScroll() {
+  if (open.value) {
+    calcPosition()
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('mousedown', onClickOutside)
+  window.addEventListener('scroll', onScroll, true)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('mousedown', onClickOutside)
+  window.removeEventListener('scroll', onScroll, true)
+})
 </script>

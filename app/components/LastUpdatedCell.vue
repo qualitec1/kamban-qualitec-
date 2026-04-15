@@ -1,43 +1,36 @@
 <template>
-  <span
-    v-if="updatedAt"
-    class="text-xs text-neutral-400 whitespace-nowrap cursor-default"
-    :title="fullDate"
+  <div
+    class="relative px-2 py-1 cursor-pointer hover:bg-neutral-50 rounded transition-colors group"
+    @click="openModal"
   >
-    {{ relative }}
-  </span>
-  <span v-else class="text-xs text-neutral-300">—</span>
+    <!-- Placeholder simples -->
+    <div class="flex items-center gap-2 text-neutral-400 text-sm">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
+      </svg>
+      <span>Atualizações</span>
+    </div>
+  </div>
+
+  <!-- Modal de atualizações -->
+  <TaskUpdatesModal
+    v-model="showModal"
+    :task-id="taskId"
+    :board-id="boardId"
+  />
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { ref } from 'vue'
 
-const props = defineProps<{ updatedAt: string | null }>()
+const props = defineProps<{
+  taskId: string
+  boardId: string
+}>()
 
-const parsed = computed(() =>
-  props.updatedAt ? new Date(props.updatedAt) : null
-)
+const showModal = ref(false)
 
-const fullDate = computed(() =>
-  parsed.value
-    ? parsed.value.toLocaleString('pt-BR', {
-        day: '2-digit', month: 'long', year: 'numeric',
-        hour: '2-digit', minute: '2-digit',
-      })
-    : ''
-)
-
-const relative = computed(() => {
-  if (!parsed.value) return ''
-  const now = Date.now()
-  const diff = Math.floor((now - parsed.value.getTime()) / 1000)
-
-  if (diff < 60)           return 'agora'
-  if (diff < 3600)         return `${Math.floor(diff / 60)}min`
-  if (diff < 86400)        return `${Math.floor(diff / 3600)}h`
-  if (diff < 86400 * 7)    return `${Math.floor(diff / 86400)}d`
-  if (diff < 86400 * 30)   return `${Math.floor(diff / (86400 * 7))}sem`
-  if (diff < 86400 * 365)  return `${Math.floor(diff / (86400 * 30))}m`
-  return `${Math.floor(diff / (86400 * 365))}a`
-})
+function openModal() {
+  showModal.value = true
+}
 </script>

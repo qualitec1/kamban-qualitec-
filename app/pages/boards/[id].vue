@@ -48,6 +48,18 @@
             </svg>
             Novo grupo
           </BaseButton>
+          <!-- Botão excluir quadro -->
+          <button
+            v-if="canEdit"
+            @click="showDeleteBoardModal = true"
+            title="Excluir quadro"
+            class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-label-sm font-medium text-danger-600 hover:bg-danger-50 transition-colors"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            Excluir
+          </button>
         </div>
       </ClientOnly>
     </div>
@@ -398,6 +410,25 @@
       </div>
     </BaseModal>
 
+    <!-- Modal confirmação de exclusão do quadro -->
+    <BaseModal v-model="showDeleteBoardModal" title="Excluir quadro?" size="sm" :close-on-backdrop="false">
+      <div class="space-y-4">
+        <p class="text-sm text-neutral-600">
+          Tem certeza que deseja excluir o quadro <span class="font-semibold">"{{ board?.name }}"</span>?
+        </p>
+        <p class="text-sm text-danger-600 font-medium">
+          Esta ação não pode ser desfeita. Todos os grupos, tarefas e subtarefas serão permanentemente removidos.
+        </p>
+      </div>
+
+      <template #footer>
+        <BaseButton variant="ghost" @click="showDeleteBoardModal = false">Cancelar</BaseButton>
+        <BaseButton variant="danger" @click="confirmDeleteBoard" :disabled="deletingBoard">
+          {{ deletingBoard ? 'Excluindo...' : 'Excluir quadro' }}
+        </BaseButton>
+      </template>
+    </BaseModal>
+
   </div>
 </template>
 
@@ -435,6 +466,7 @@ const {
 
 // Composables para mutações
 const { addGroup, renameGroup, deleteGroup, toggleCollapse, reorderGroups } = useTaskGroups()
+const { deleteBoard } = useBoards()
 
 // Preferência: mostrar grupos vazios (persiste em localStorage)
 const showEmptyGroups = ref(true)
@@ -866,6 +898,10 @@ const boardMembers = ref<Array<{
 }>>([])
 const boardMembersComposable = useBoardMembers()
 
+// Excluir quadro
+const showDeleteBoardModal = ref(false)
+const deletingBoard = ref(false)
+
 function openCreateTask(groupId: string) {
   newTaskTitle.value = ''
   creatingInGroup.value = groupId
@@ -983,6 +1019,29 @@ async function handleShareGroup() {
     shareError.value = errorMessage
   } finally {
     sharingGroup.value = false
+  }
+}
+
+async function confirmDeleteBoard() {
+  if (!board.value || deletingBoard.value) return
+  
+  deletingBoard.value = true
+  
+  try {
+    const success = await deleteBoard(boardId)
+    
+    if (success) {
+      // Redirecionar para lista de quadros
+      await navigateTo('/boards')
+    } else {
+      alert('Erro ao excluir quadro. Tente novamente.')
+    }
+  } catch (error) {
+    console.error('[Delete Board] Error:', error)
+    alert('Erro ao excluir quadro. Verifique o console.')
+  } finally {
+    deletingBoard.value = false
+    showDeleteBoardModal.value = false
   }
 }
 

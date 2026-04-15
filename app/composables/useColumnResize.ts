@@ -22,8 +22,10 @@ const MAX_WIDTH = 600
 // Estado global reativo compartilhado (singleton)
 const globalState = reactive<{
   boards: Record<string, Record<string, number>>
+  scrollPositions: Record<string, number>
 }>({
-  boards: {}
+  boards: {},
+  scrollPositions: {}
 })
 
 // Inicializar board se não existir
@@ -98,11 +100,22 @@ export function useColumnResize(boardId: string) {
     }))
   }
   
+  // Gerenciar posição de scroll compartilhada (para sincronizar header e rows em mobile)
+  function getScrollPosition(): number {
+    return globalState.scrollPositions[boardId] ?? 0
+  }
+  
+  function setScrollPosition(scrollLeft: number) {
+    globalState.scrollPositions[boardId] = scrollLeft
+  }
+  
   return {
     getWidth,
     setWidth,
     resetWidths,
     getColumnStyle,
+    getScrollPosition,
+    setScrollPosition,
     MIN_WIDTH,
     MAX_WIDTH
   }

@@ -375,6 +375,9 @@ async function toggleAssignee(userId: string) {
   
   const assigned = isAssigned(userId)
   
+  // Salvar estado anterior
+  const previousAssignees = [...assignees.value]
+  
   // Optimistic update
   if (assigned) {
     assignees.value = assignees.value.filter(a => a.id !== userId)
@@ -393,25 +396,66 @@ async function toggleAssignee(userId: string) {
   // Emit update immediately
   emit('update', assignees.value)
 
-  // Persist to database
-  if (assigned) {
-    await removeAssignee(userId)
-  } else {
-    await addAssignee(userId)
+  // Persist to database sem recarregar
+  try {
+    const supabase = useNuxtApp().$supabase as any
+    
+    if (assigned) {
+      const { error: deleteError } = await supabase
+        .from('task_assignees')
+        .delete()
+        .eq('task_id', props.taskId)
+        .eq('user_id', userId)
+      
+      if (deleteError) throw deleteError
+    } else {
+      const { error: insertError } = await supabase
+        .from('task_assignees')
+        .insert({ task_id: props.taskId, user_id: userId })
+      
+      if (insertError) throw insertError
+    }
+  } catch (err) {
+    // Reverter em caso de erro
+    assignees.value = previousAssignees
+    emit('update', previousAssignees)
+    console.error('Erro ao atualizar responsável:', err)
   }
 }
 
 async function removeAssigneeById(userId: string) {
   if (!canEditAssignees.value) return
   
-  // Optimistic update
+  // Salvar estado atual antes da remoção
+  const previousAssignees = [...assignees.value]
+  
+  // Optimistic update - remover apenas o usuário específico
   assignees.value = assignees.value.filter(a => a.id !== userId)
   
   // Emit update immediately
   emit('update', assignees.value)
   
-  // Persist to database
-  await removeAssignee(userId)
+  // Persist to database sem recarregar
+  try {
+    const supabase = useNuxtApp().$supabase as any
+    const { error: deleteError } = await supabase
+      .from('task_assignees')
+      .delete()
+      .eq('task_id', props.taskId)
+      .eq('user_id', userId)
+    
+    if (deleteError) {
+      // Reverter em caso de erro
+      assignees.value = previousAssignees
+      emit('update', previousAssignees)
+      console.error('Erro ao remover responsável:', deleteError)
+    }
+  } catch (err) {
+    // Reverter em caso de erro
+    assignees.value = previousAssignees
+    emit('update', previousAssignees)
+    console.error('Erro ao remover responsável:', err)
+  }
 }
 
 async function handleInvite() {

@@ -56,9 +56,9 @@
               Sem status
             </button>
 
-            <!-- Status disponíveis -->
+            <!-- Status disponíveis (usando orderedStatuses para refletir reordenação) -->
             <button
-              v-for="status in statuses"
+              v-for="status in orderedStatuses"
               :key="status.id"
               type="button"
               class="w-full px-4 py-3 rounded-lg text-sm font-medium text-white text-center transition-all hover:opacity-90 mb-2"
@@ -69,7 +69,7 @@
             </button>
 
             <!-- Estado vazio -->
-            <div v-if="statuses.length === 0 && !loading" class="px-4 py-6 text-center">
+            <div v-if="orderedStatuses.length === 0 && !loading" class="px-4 py-6 text-center">
               <p class="text-sm text-neutral-400">Nenhum status configurado</p>
             </div>
           </div>
