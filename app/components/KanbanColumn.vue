@@ -35,6 +35,9 @@
         @click="$emit('open-task', task.id)"
         @drag-start="handleDragStart(task.id)"
         @drag-end="handleDragEnd"
+        @touch-drag-start="handleTouchDragStart"
+        @touch-drag-move="handleTouchDragMove"
+        @touch-drag-end="handleTouchDragEnd"
       />
 
       <!-- Empty state / Drop zone -->
@@ -109,6 +112,9 @@ const emit = defineEmits<{
   (e: 'drag-start', taskId: string): void
   (e: 'drag-end'): void
   (e: 'drop', groupId: string): void
+  (e: 'touch-drag-start', data: { taskId: string; x: number; y: number }): void
+  (e: 'touch-drag-move', data: { x: number; y: number }): void
+  (e: 'touch-drag-end'): void
 }>()
 
 const inputRef = ref<HTMLInputElement | null>(null)
@@ -128,6 +134,19 @@ function handleDragStart(taskId: string) {
 function handleDragEnd() {
   isDragOver.value = false
   emit('drag-end')
+}
+
+function handleTouchDragStart(data: { taskId: string; x: number; y: number }) {
+  emit('touch-drag-start', data)
+}
+
+function handleTouchDragMove(data: { x: number; y: number }) {
+  emit('touch-drag-move', data)
+}
+
+function handleTouchDragEnd() {
+  isDragOver.value = false
+  emit('touch-drag-end')
 }
 
 function handleDragOver(e: DragEvent) {

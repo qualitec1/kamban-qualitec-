@@ -5,6 +5,7 @@
       <KanbanColumn
         v-for="group in visibleGroups"
         :key="group.id"
+        :ref="el => setColumnRef(group.id, el)"
         :group="group"
         :tasks="tasksByGroup[group.id] || []"
         :statuses="statuses"
@@ -21,6 +22,9 @@
         @drag-start="handleDragStart"
         @drag-end="handleDragEnd"
         @drop="handleDrop(group.id)"
+        @touch-drag-start="handleTouchDragStart"
+        @touch-drag-move="handleTouchDragMove"
+        @touch-drag-end="handleTouchDragEnd"
       />
 
       <!-- Botão adicionar coluna -->
@@ -36,11 +40,25 @@
         </button>
       </div>
     </div>
+    
+    <!-- Indicador visual de drop zone durante touch drag -->
+    <div
+      v-if="touchDragTargetGroupId"
+      class="fixed inset-0 pointer-events-none z-50"
+    >
+      <div
+        v-for="group in visibleGroups"
+        :key="`drop-${group.id}`"
+        :ref="el => setDropZoneRef(group.id, el)"
+        class="absolute transition-all"
+        :class="{ 'bg-primary-100 border-4 border-primary-400 rounded-xl': touchDragTargetGroupId === group.id }"
+      />
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import type { TaskRow } from '~/composables/useTasks'
 
 const props = defineProps<{
@@ -66,6 +84,24 @@ const creatingInGroup = ref<string | null>(null)
 const newTaskTitle = ref('')
 const draggingTaskId = ref<string | null>(null)
 const sourceGroupId = ref<string | null>(null)
+
+// Touch drag state
+const touchDraggingTaskId = ref<string | null>(null)
+const touchDragTargetGroupId = ref<string | null>(null)
+const columnRefs = ref<Map<string, any>>(new Map())
+const dropZoneRefs = ref<Map<string, any>>(new Map())
+
+function setColumnRef(groupId: string, el: any) {
+  if (el) {
+    columnRefs.value.set(groupId, el)
+  }
+}
+
+function setDropZoneRef(groupId: string, el: any) {
+  if (el) {
+    dropZoneRefs.value.set(groupId, el)
+  }
+}
 
 function handleStartCreate(groupId: string) {
   newTaskTitle.value = ''
@@ -122,5 +158,70 @@ function handleDrop(targetGroupId: string) {
   })
   
   handleDragEnd()
+}
+
+// Touch drag handlers
+function handleTouchDragStart(data: { taskId: string; x: number; y: number }) {
+  touchDraggingTaskId.value = data.taskId
+  draggingTaskId.value = data.taskId
+  
+  // Encontrar o grupo de origem
+  for (const groupId in props.tasksByGroup) {
+    const tasks = props.tasksByGroup[groupId]
+    if (tasks?.some(t => t.id === data.taskId)) {
+      sourceGroupId.value = groupId
+      break
+    }
+  }
+  
+  // Atualizar target inicial
+  updateTouchDragTarget(data.x, data.y)
+}
+
+function handleTouchDragMove(data: { x: number; y: number }) {
+  if (!touchDraggingTaskId.value) return
+  updateTouchDragTarget(data.x, data.y)
+}
+
+function handleTouchDragEnd() {
+  if (!touchDraggingTaskId.value || !sourceGroupId.value || !touchDragTargetGroupId.value) {
+    resetTouchDrag()
+    return
+  }
+  
+  // Se for o mesmo grupo, não fazer nada
+  if (sourceGroupId.value !== touchDragTargetGroupId.value) {
+    emit('move-task', {
+      taskId: touchDraggingTaskId.value,
+      sourceGroupId: sourceGroupId.value,
+      targetGroupId: touchDragTargetGroupId.value
+    })
+  }
+  
+  resetTouchDrag()
+}
+
+function updateTouchDragTarget(x: number, y: number) {
+  let foundTarget: string | null = null
+  
+  // Verificar qual coluna está sob o dedo
+  for (const [groupId, colRef] of columnRefs.value.entries()) {
+    if (!colRef?.$el) continue
+    
+    const rect = colRef.$el.getBoundingClientRect()
+    if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
+      foundTarget = groupId
+      break
+    }
+  }
+  
+  touchDragTargetGroupId.value = foundTarget
+}
+
+function resetTouchDrag() {
+  touchDraggingTaskId.value = null
+  touchDragTargetGroupId.value = null
+  draggingTaskId.value = null
+  sourceGroupId.value = null
 }
 </script>
