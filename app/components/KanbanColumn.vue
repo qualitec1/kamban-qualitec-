@@ -1,5 +1,11 @@
 <template>
-  <div class="flex-shrink-0 w-80 flex flex-col bg-neutral-50 rounded-xl border border-neutral-200">
+  <div 
+    class="flex-shrink-0 w-80 flex flex-col bg-neutral-50 rounded-xl border border-neutral-200 transition-colors"
+    :class="{ 'border-primary-400 bg-primary-50': isDragOver }"
+    @dragover.prevent="handleDragOver"
+    @dragleave="handleDragLeave"
+    @drop="handleDrop"
+  >
     <!-- Cabeçalho da coluna -->
     <div
       class="flex items-center gap-2 px-4 py-3 border-b border-neutral-200 shrink-0"
@@ -14,19 +20,32 @@
     </div>
 
     <!-- Lista de cards -->
-    <div class="flex-1 overflow-y-auto p-3 space-y-2">
+    <div 
+      class="flex-1 overflow-y-auto p-3 space-y-2"
+      @dragover.prevent="handleDragOver"
+      @drop="handleDrop"
+    >
       <KanbanCard
         v-for="task in tasks"
         :key="task.id"
         :task="task"
         :statuses="statuses"
         :priorities="priorities"
+        :is-dragging="draggingTaskId === task.id"
         @click="$emit('open-task', task.id)"
+        @drag-start="handleDragStart(task.id)"
+        @drag-end="handleDragEnd"
       />
 
-      <!-- Empty state -->
-      <div v-if="!tasks.length" class="text-center py-8">
-        <p class="text-label-sm text-muted italic">Nenhuma tarefa</p>
+      <!-- Empty state / Drop zone -->
+      <div 
+        v-if="!tasks.length" 
+        class="text-center py-8 rounded-lg transition-colors"
+        :class="{ 'bg-primary-100 border-2 border-dashed border-primary-400': isDragOver }"
+      >
+        <p class="text-label-sm text-muted italic">
+          {{ isDragOver ? 'Solte aqui para mover' : 'Nenhuma tarefa' }}
+        </p>
       </div>
     </div>
 
@@ -78,17 +97,22 @@ const props = defineProps<{
   canEdit: boolean
   isCreating: boolean
   newTaskTitle: string
+  draggingTaskId: string | null
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'open-task', taskId: string): void
   (e: 'start-create'): void
   (e: 'save'): void
   (e: 'cancel'): void
   (e: 'update:newTaskTitle', value: string): void
+  (e: 'drag-start', taskId: string): void
+  (e: 'drag-end'): void
+  (e: 'drop', groupId: string): void
 }>()
 
 const inputRef = ref<HTMLInputElement | null>(null)
+const isDragOver = ref(false)
 
 watch(() => props.isCreating, async (isCreating) => {
   if (isCreating) {
@@ -96,4 +120,39 @@ watch(() => props.isCreating, async (isCreating) => {
     inputRef.value?.focus()
   }
 })
+
+function handleDragStart(taskId: string) {
+  emit('drag-start', taskId)
+}
+
+function handleDragEnd() {
+  isDragOver.value = false
+  emit('drag-end')
+}
+
+function handleDragOver(e: DragEvent) {
+  if (!props.draggingTaskId) return
+  e.preventDefault()
+  isDragOver.value = true
+}
+
+function handleDragLeave(e: DragEvent) {
+  // Verificar se realmente saiu da coluna (não apenas de um filho)
+  const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+  const x = e.clientX
+  const y = e.clientY
+  
+  if (x < rect.left || x >= rect.right || y < rect.top || y >= rect.bottom) {
+    isDragOver.value = false
+  }
+}
+
+function handleDrop(e: DragEvent) {
+  e.preventDefault()
+  isDragOver.value = false
+  
+  if (props.draggingTaskId) {
+    emit('drop', props.group.id)
+  }
+}
 </script>

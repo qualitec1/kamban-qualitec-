@@ -12,11 +12,15 @@
         :can-edit="canEdit"
         :is-creating="creatingInGroup === group.id"
         :new-task-title="newTaskTitle"
+        :dragging-task-id="draggingTaskId"
         @open-task="$emit('open-task', $event)"
         @start-create="handleStartCreate(group.id)"
         @save="handleSaveTask(group.id)"
         @cancel="handleCancelCreate"
         @update:newTaskTitle="newTaskTitle = $event"
+        @drag-start="handleDragStart"
+        @drag-end="handleDragEnd"
+        @drop="handleDrop(group.id)"
       />
 
       <!-- Botão adicionar coluna -->
@@ -55,10 +59,13 @@ const emit = defineEmits<{
   (e: 'open-task', taskId: string): void
   (e: 'add-group'): void
   (e: 'create-task', data: { groupId: string; title: string }): void
+  (e: 'move-task', data: { taskId: string; sourceGroupId: string; targetGroupId: string }): void
 }>()
 
 const creatingInGroup = ref<string | null>(null)
 const newTaskTitle = ref('')
+const draggingTaskId = ref<string | null>(null)
+const sourceGroupId = ref<string | null>(null)
 
 function handleStartCreate(groupId: string) {
   newTaskTitle.value = ''
@@ -79,5 +86,41 @@ function handleSaveTask(groupId: string) {
   
   emit('create-task', { groupId, title })
   handleCancelCreate()
+}
+
+function handleDragStart(taskId: string) {
+  draggingTaskId.value = taskId
+  
+  // Encontrar o grupo de origem
+  for (const groupId in props.tasksByGroup) {
+    const tasks = props.tasksByGroup[groupId]
+    if (tasks?.some(t => t.id === taskId)) {
+      sourceGroupId.value = groupId
+      break
+    }
+  }
+}
+
+function handleDragEnd() {
+  draggingTaskId.value = null
+  sourceGroupId.value = null
+}
+
+function handleDrop(targetGroupId: string) {
+  if (!draggingTaskId.value || !sourceGroupId.value) return
+  
+  // Se for o mesmo grupo, não fazer nada
+  if (sourceGroupId.value === targetGroupId) {
+    handleDragEnd()
+    return
+  }
+  
+  emit('move-task', {
+    taskId: draggingTaskId.value,
+    sourceGroupId: sourceGroupId.value,
+    targetGroupId
+  })
+  
+  handleDragEnd()
 }
 </script>

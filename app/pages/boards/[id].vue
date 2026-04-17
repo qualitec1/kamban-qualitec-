@@ -352,6 +352,7 @@
       @open-task="openTaskModal"
       @add-group="openAddGroup()"
       @create-task="handleCreateTaskFromKanban"
+      @move-task="handleMoveTaskInKanban"
     />
 
     <!-- Modal novo grupo -->
@@ -1025,6 +1026,18 @@ async function handleCreateTaskFromKanban({ groupId, title }: { groupId: string;
       await refreshGroupTasks(groupId, showArchived.value)
     }
   } catch { /* silently fail */ }
+}
+
+async function handleMoveTaskInKanban({ taskId, sourceGroupId, targetGroupId }: { taskId: string; sourceGroupId: string; targetGroupId: string }) {
+  // Encontrar a tarefa
+  const sourceTasks = tasksByGroup.value[sourceGroupId]
+  if (!sourceTasks) return
+  
+  const task = sourceTasks.find(t => t.id === taskId)
+  if (!task) return
+  
+  // Usar a função existente de cross-group move
+  await handleCrossGroupMove(task, sourceGroupId, targetGroupId)
 }
 
 function handleTaskDeleted(taskId: string) {

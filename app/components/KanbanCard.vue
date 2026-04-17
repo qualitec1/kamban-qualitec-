@@ -1,7 +1,11 @@
 <template>
   <div
-    class="bg-white rounded-lg p-3 border border-neutral-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-    @click="$emit('click')"
+    draggable="true"
+    class="bg-white rounded-lg p-3 border border-neutral-200 shadow-sm hover:shadow-md transition-all cursor-move"
+    :class="{ 'opacity-50 scale-95': isDragging, 'cursor-pointer': !isDragging }"
+    @click="!isDragging && $emit('click')"
+    @dragstart="handleDragStart"
+    @dragend="handleDragEnd"
   >
     <h3 class="text-body-sm font-medium text-neutral-900 mb-2">{{ task.title }}</h3>
     
@@ -43,10 +47,13 @@ const props = defineProps<{
   task: TaskRow
   statuses: Array<{ id: string; name: string; color: string }>
   priorities: Array<{ id: string; name: string; color: string }>
+  isDragging?: boolean
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'click'): void
+  (e: 'drag-start'): void
+  (e: 'drag-end'): void
 }>()
 
 const statusData = computed(() => 
@@ -61,5 +68,17 @@ function formatDate(dateStr: string | null): string {
   if (!dateStr) return ''
   const date = new Date(dateStr)
   return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+}
+
+function handleDragStart(e: DragEvent) {
+  if (e.dataTransfer) {
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/plain', props.task.id)
+  }
+  emit('drag-start')
+}
+
+function handleDragEnd() {
+  emit('drag-end')
 }
 </script>
