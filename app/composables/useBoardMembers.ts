@@ -17,6 +17,15 @@ export interface BoardMemberWithProfile extends BoardMember {
   }
 }
 
+// Cache global compartilhado entre todas as instâncias
+const membersCache = new Map<string, {
+  data: BoardMemberWithProfile[]
+  timestamp: number
+  loading: Promise<void> | null
+}>()
+
+const CACHE_TTL = 60000 // 1 minuto
+
 export function useBoardMembers() {
   function getClient(): SupabaseClient {
     if (import.meta.server) throw new Error('[useBoardMembers] SSR not supported')
@@ -30,11 +39,41 @@ export function useBoardMembers() {
   const error = ref<string | null>(null)
 
   async function fetchMembers(boardId: string) {
+    // Verificar cache primeiro
+    const cached = membersCache.get(boardId)
+    if (cached) {
+      const age = Date.now() - cached.timestamp
+      if (age < CACHE_TTL) {
+        // Cache válido
+        members.value = cached.data
+        return
+      }
+      
+      // Se já está carregando, aguardar
+      if (cached.loading) {
+        await cached.loading
+        members.value = membersCache.get(boardId)?.data ?? []
+        return
+      }
+    }
+    
+    // Criar promise de loading para evitar requisições duplicadas
+    let resolveLoading: () => void
+    const loadingPromise = new Promise<void>((resolve) => {
+      resolveLoading = resolve
+    })
+    
+    membersCache.set(boardId, {
+      data: cached?.data ?? [],
+      timestamp: cached?.timestamp ?? 0,
+      loading: loadingPromise
+    })
+    
     loading.value = true
     error.value = null
 
     try {
-      const supabase = getClient()
+      const supabase = getClient() as any
       const { data, error: fetchError } = await supabase
         .from('board_members')
         .select(`
@@ -49,28 +88,40 @@ export function useBoardMembers() {
 
       if (fetchError) throw fetchError
 
-      members.value = (data || []).map(item => ({
+      const membersData = (data || []).map((item: any) => ({
         board_id: item.board_id,
         user_id: item.user_id,
         access_role: item.access_role,
         profile: item.profiles as any
       }))
+      
+      members.value = membersData
+      
+      // Atualizar cache
+      membersCache.set(boardId, {
+        data: membersData,
+        timestamp: Date.now(),
+        loading: null
+      })
     } catch (e: any) {
       error.value = e.message
     } finally {
       loading.value = false
+      resolveLoading!()
     }
   }
 
   async function addMember(boardId: string, userId: string, role: AccessRole = 'viewer') {
     try {
-      const supabase = getClient()
+      const supabase = getClient() as any
       const { error: insertError } = await supabase
         .from('board_members')
         .insert({ board_id: boardId, user_id: userId, access_role: role })
 
       if (insertError) throw insertError
 
+      // Invalidar cache e recarregar
+      membersCache.delete(boardId)
       await fetchMembers(boardId)
       return true
     } catch (e: any) {
@@ -81,7 +132,7 @@ export function useBoardMembers() {
 
   async function updateRole(boardId: string, userId: string, role: AccessRole) {
     try {
-      const supabase = getClient()
+      const supabase = getClient() as any
       const { error: updateError } = await supabase
         .from('board_members')
         .update({ access_role: role })
@@ -94,6 +145,9 @@ export function useBoardMembers() {
       if (idx !== -1 && members.value[idx]) {
         members.value[idx].access_role = role
       }
+      
+      // Invalidar cache
+      membersCache.delete(boardId)
       return true
     } catch (e: any) {
       error.value = e.message
@@ -103,7 +157,7 @@ export function useBoardMembers() {
 
   async function removeMember(boardId: string, userId: string) {
     try {
-      const supabase = getClient()
+      const supabase = getClient() as any
       const { error: deleteError } = await supabase
         .from('board_members')
         .delete()
@@ -113,6 +167,9 @@ export function useBoardMembers() {
       if (deleteError) throw deleteError
 
       members.value = members.value.filter(m => m.user_id !== userId)
+      
+      // Invalidar cache
+      membersCache.delete(boardId)
       return true
     } catch (e: any) {
       error.value = e.message
@@ -125,7 +182,7 @@ export function useBoardMembers() {
     if (!uid) return false
 
     try {
-      const supabase = getClient()
+      const supabase = getClient() as any
       const { data } = await supabase
         .from('board_members')
         .select('user_id')
@@ -144,7 +201,7 @@ export function useBoardMembers() {
     if (!uid) return null
 
     try {
-      const supabase = getClient()
+      const supabase = getClient() as any
       const { data } = await supabase
         .from('board_members')
         .select('access_role')
@@ -175,3 +232,6 @@ export function useBoardMembers() {
     canEdit
   }
 }
+
+// Exportar cache para acesso externo
+export { membersCache }

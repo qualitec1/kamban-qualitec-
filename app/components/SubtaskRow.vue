@@ -83,6 +83,8 @@
               v-else-if="col.key === 'assignee'"
               :task-id="subtask.id"
               :board-id="boardId"
+              :initial-assignees="subtask.assignees"
+              :is-subtask="true"
             />
             
             <!-- Due Date Cell -->

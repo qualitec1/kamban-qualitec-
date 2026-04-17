@@ -117,7 +117,7 @@ const sortedSubtasks = computed(() =>
   [...subtasks.value].sort((a, b) => a.sort_order - b.sort_order)
 )
 
-const subtaskColumns = ['status', 'dueDate', 'priority']
+const subtaskColumns = ['assignee', 'status', 'dueDate', 'priority']
 
 function isSubtaskColumn(key: string): boolean {
   return subtaskColumns.includes(key)
@@ -125,6 +125,7 @@ function isSubtaskColumn(key: string): boolean {
 
 function getColumnLabel(key: string): string {
   const labels: Record<string, string> = {
+    assignee: 'Responsável',
     status: 'Status',
     dueDate: 'Data',
     priority: 'Prioridade'

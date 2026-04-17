@@ -33,8 +33,28 @@
             @change="saveField('status_id', draftStatusId)"
           >
             <option :value="null">Sem status</option>
-            <option v-for="s in statuses" :key="s.id" :value="s.id">{{ s.name }}</option>
+            <option 
+              v-for="s in statuses" 
+              :key="s.id" 
+              :value="s.id"
+              :style="{ color: s.color }"
+            >
+              {{ s.name }}
+            </option>
           </select>
+          <!-- Indicador visual da cor do status selecionado -->
+          <div 
+            v-if="draftStatusId" 
+            class="flex items-center gap-2 mt-1"
+          >
+            <div 
+              class="w-3 h-3 rounded-full" 
+              :style="{ backgroundColor: statuses.find(s => s.id === draftStatusId)?.color || '#6366f1' }"
+            />
+            <span class="text-xs text-neutral-500">
+              {{ statuses.find(s => s.id === draftStatusId)?.name }}
+            </span>
+          </div>
         </div>
 
         <!-- Prioridade -->
@@ -47,8 +67,28 @@
             @change="saveField('priority_id', draftPriorityId)"
           >
             <option :value="null">Sem prioridade</option>
-            <option v-for="p in priorities" :key="p.id" :value="p.id">{{ p.name }}</option>
+            <option 
+              v-for="p in priorities" 
+              :key="p.id" 
+              :value="p.id"
+              :style="{ color: p.color }"
+            >
+              {{ p.name }}
+            </option>
           </select>
+          <!-- Indicador visual da cor da prioridade selecionada -->
+          <div 
+            v-if="draftPriorityId" 
+            class="flex items-center gap-2 mt-1"
+          >
+            <div 
+              class="w-3 h-3 rounded-full" 
+              :style="{ backgroundColor: priorities.find(p => p.id === draftPriorityId)?.color || '#6366f1' }"
+            />
+            <span class="text-xs text-neutral-500">
+              {{ priorities.find(p => p.id === draftPriorityId)?.name }}
+            </span>
+          </div>
         </div>
 
         <!-- Data de início -->
@@ -104,7 +144,7 @@
         <div class="space-y-1.5">
           <label class="text-xs font-medium text-neutral-500 uppercase tracking-wide">Etiquetas</label>
           <div class="min-h-[44px]">
-            <LabelsCell :task-id="taskId" :board-id="boardId" :max-visible="5" />
+            <LabelsCell :key="taskId" :task-id="taskId" :board-id="boardId" :max-visible="5" />
           </div>
         </div>
       </div>
@@ -124,17 +164,17 @@
 
       <!-- Subtarefas -->
       <div class="pt-4 border-t border-neutral-200">
-        <SubtasksSection :task-id="taskId" :board-id="boardId" />
+        <SubtasksSection :key="taskId" :task-id="taskId" :board-id="boardId" />
       </div>
 
       <!-- Anexos -->
       <div class="pt-4 border-t border-neutral-200">
-        <TaskAttachmentsManager :task-id="taskId" :board-id="boardId" />
+        <TaskAttachmentsManager :key="taskId" :task-id="taskId" :board-id="boardId" />
       </div>
 
       <!-- Histórico de Atividades -->
       <div class="pt-4 border-t border-neutral-200">
-        <TaskActivityHistory :task-id="taskId" />
+        <TaskActivityHistory :key="taskId" :task-id="taskId" />
       </div>
 
       <!-- Metadados -->
@@ -195,7 +235,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch } from 'vue'
 import { useTaskDetail } from '~/composables/useTaskDetail'
 import { useTaskStatuses } from '~/composables/useTaskStatuses'
 import { useTaskPriorities } from '~/composables/useTaskPriorities'
@@ -237,6 +277,9 @@ const draftStartDate   = ref('')
 const draftDueDate     = ref('')
 const draftBudget      = ref('')
 
+// Flag para controlar se já carregou os dados
+const dataLoaded = ref(false)
+
 function syncDrafts() {
   if (!task.value) return
   draftTitle.value       = task.value.title
@@ -250,12 +293,40 @@ function syncDrafts() {
 
 watch(task, syncDrafts)
 
+// Função para carregar todos os dados
+async function loadAllData() {
+  console.log('[TaskModal] Loading all data for task:', props.taskId)
+  dataLoaded.value = false
+  
+  try {
+    await Promise.all([
+      fetchTask(props.taskId),
+      fetchStatuses(),
+      fetchPriorities(),
+      fetchAssignees(props.taskId),
+      fetchUserRole()
+    ])
+    dataLoaded.value = true
+    console.log('[TaskModal] Data loaded successfully')
+  } catch (error) {
+    console.error('[TaskModal] Error loading data:', error)
+  }
+}
+
 // Carrega dados quando o modal abre
-watch(() => props.modelValue, async (val) => {
-  if (val && !task.value) {
-    await Promise.all([fetchTask(props.taskId), fetchStatuses(), fetchPriorities(), fetchAssignees()])
+watch(() => props.modelValue, async (isOpen) => {
+  if (isOpen) {
+    await loadAllData()
   }
 }, { immediate: true })
+
+// Recarrega quando o taskId mudar (enquanto o modal está aberto)
+watch(() => props.taskId, async (newTaskId, oldTaskId) => {
+  if (props.modelValue && newTaskId && newTaskId !== oldTaskId) {
+    console.log('[TaskModal] TaskId changed from', oldTaskId, 'to', newTaskId)
+    await loadAllData()
+  }
+})
 
 async function saveField(field: string, value: unknown) {
   if (!task.value) return
@@ -341,14 +412,4 @@ function formatRelative(d: string) {
   if (diff < 86400) return `há ${Math.floor(diff / 3600)}h`
   return `há ${Math.floor(diff / 86400)}d`
 }
-
-onMounted(async () => {
-  await Promise.all([
-    fetchTask(props.taskId),
-    fetchStatuses(),
-    fetchPriorities(),
-    fetchAssignees(),
-    fetchUserRole(),
-  ])
-})
 </script>

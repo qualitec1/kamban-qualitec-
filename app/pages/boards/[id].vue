@@ -9,7 +9,40 @@
       </div>
       <ClientOnly>
         <div class="flex items-center gap-2">
-          <ColumnVisibilityMenu :board-id="boardId" />
+          <!-- Toggle view mode -->
+          <div class="flex items-center bg-neutral-100 rounded-lg p-0.5">
+            <button
+              @click="viewMode = 'horizontal'"
+              :class="[
+                'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-label-sm font-medium transition-all',
+                viewMode === 'horizontal'
+                  ? 'bg-white text-neutral-900 shadow-sm'
+                  : 'text-neutral-600 hover:text-neutral-900'
+              ]"
+              title="Visualização horizontal (tabela)"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+              Tabela
+            </button>
+            <button
+              @click="viewMode = 'vertical'"
+              :class="[
+                'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-label-sm font-medium transition-all',
+                viewMode === 'vertical'
+                  ? 'bg-white text-neutral-900 shadow-sm'
+                  : 'text-neutral-600 hover:text-neutral-900'
+              ]"
+              title="Visualização vertical (Kanban)"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
+              </svg>
+              Kanban
+            </button>
+          </div>
+          <ColumnVisibilityMenu v-if="viewMode === 'horizontal'" :board-id="boardId" />
           <!-- Toggle tarefas arquivadas -->
           <button
             @click="toggleShowArchived"
@@ -67,9 +100,8 @@
     <LoadingState v-if="loading" />
     <ErrorState v-else-if="error" :message="error" @retry="load" />
 
-    <template v-else>
-      <!-- Grupos -->
-      <div class="flex-1 overflow-y-auto space-y-4">
+    <!-- Visualização horizontal (tabela) -->
+    <div v-else-if="viewMode === 'horizontal'" class="flex-1 overflow-y-auto space-y-4">
 
       <div
         v-for="group in visibleGroups"
@@ -308,7 +340,118 @@
         Adicionar grupo
       </button>
     </div>
-    </template>
+
+    <!-- Visualização vertical (Kanban) -->
+    <div v-else-if="viewMode === 'vertical'" class="flex-1 overflow-x-auto overflow-y-hidden">
+        <div class="flex gap-4 h-full pb-4">
+          <!-- Coluna para cada grupo -->
+          <div
+            v-for="group in visibleGroups"
+            :key="group.id"
+            class="flex-shrink-0 w-80 flex flex-col bg-neutral-50 rounded-xl border border-neutral-200"
+          >
+            <!-- Cabeçalho da coluna -->
+            <div
+              class="flex items-center gap-2 px-4 py-3 border-b border-neutral-200 shrink-0"
+              :style="`border-left: 4px solid ${group.color || '#6366f1'}`"
+            >
+              <span class="flex-1 text-heading-sm font-semibold text-neutral-900 truncate">
+                {{ group.name }}
+              </span>
+              <span class="text-label-xs text-muted bg-white px-2 py-0.5 rounded-full">
+                {{ tasksByGroup[group.id]?.length || 0 }}
+              </span>
+            </div>
+
+            <!-- Lista de cards -->
+            <div class="flex-1 overflow-y-auto p-3 space-y-2">
+              <div
+                v-for="task in tasksByGroup[group.id]"
+                :key="task.id"
+                class="bg-white rounded-lg p-3 border border-neutral-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                @click="openTaskModal(task.id)"
+              >
+                <h3 class="text-body-sm font-medium text-neutral-900 mb-2">{{ task.title }}</h3>
+                
+                <div class="flex items-center gap-2 text-label-xs text-muted flex-wrap">
+                  <!-- Status com cor real -->
+                  <div v-if="task.status_id" class="flex items-center gap-1">
+                    <div 
+                      class="w-2 h-2 rounded-full" 
+                      :style="{ backgroundColor: getStatusById(task.status_id)?.color || '#6366f1' }"
+                    />
+                    <span>{{ getStatusById(task.status_id)?.name || 'Status' }}</span>
+                  </div>
+                  
+                  <!-- Priority com cor real -->
+                  <div v-if="task.priority_id" class="flex items-center gap-1">
+                    <div
+                      class="w-2 h-2 rounded-full"
+                      :style="{ backgroundColor: getPriorityById(task.priority_id)?.color || '#6366f1' }"
+                    />
+                    <span>{{ getPriorityById(task.priority_id)?.name || 'Prioridade' }}</span>
+                  </div>
+                  
+                  <!-- Due date -->
+                  <div v-if="task.due_date" class="flex items-center gap-1">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span>{{ formatDate(task.due_date) }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Empty state -->
+              <div v-if="!(tasksByGroup[group.id]?.length)" class="text-center py-8">
+                <p class="text-label-sm text-muted italic">Nenhuma tarefa</p>
+              </div>
+            </div>
+
+            <!-- Botão adicionar tarefa -->
+            <div v-if="canEdit" class="border-t border-neutral-200 p-2 shrink-0">
+              <button
+                v-if="creatingInGroup !== group.id"
+                @click="openCreateTask(group.id)"
+                class="w-full flex items-center gap-2 px-3 py-2 text-label-sm text-muted hover:text-primary-600 hover:bg-white rounded-lg transition-colors"
+              >
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
+                Nova tarefa
+              </button>
+              
+              <!-- Input inline -->
+              <div v-else class="bg-white rounded-lg p-3 border border-primary-400 shadow-sm">
+                <input
+                  :ref="el => { if (el && creatingInGroup === group.id) (el as HTMLInputElement).focus() }"
+                  v-model="newTaskTitle"
+                  type="text"
+                  placeholder="Nome da tarefa..."
+                  maxlength="500"
+                  class="w-full text-body-sm text-neutral-800 bg-transparent outline-none placeholder:text-neutral-400"
+                  @keydown.enter="saveNewTask(group.id)"
+                  @keydown.esc="cancelCreateTask"
+                  @blur="cancelCreateTask"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Botão adicionar coluna -->
+          <div v-if="canEdit" class="flex-shrink-0 w-80">
+            <button
+              @click="openAddGroup()"
+              class="w-full h-full min-h-[200px] flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-neutral-300 hover:border-primary-400 hover:bg-primary-50 text-muted hover:text-primary-600 transition-all"
+            >
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
+              <span class="text-label-sm font-medium">Adicionar grupo</span>
+            </button>
+          </div>
+        </div>
+      </div>
 
     <!-- Modal novo grupo -->
     <BaseModal v-model="showAddGroupModal" title="Novo grupo" size="sm">
@@ -429,15 +572,28 @@
       </template>
     </BaseModal>
 
+    <!-- Task Modal -->
+    <TaskModal
+      v-if="selectedTaskId"
+      :key="selectedTaskId"
+      v-model="showTaskModal"
+      :task-id="selectedTaskId"
+      :board-id="boardId"
+      @updated="handleTaskUpdated"
+      @deleted="handleTaskDeletedFromModal"
+    />
+
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from '#imports'
 import { useTaskGroups } from '~/composables/useTaskGroups'
 import { useBoardData } from '~/composables/useBoardData'
 import { useTasks, type TaskRow } from '~/composables/useTasks'
+import { useTaskStatuses } from '~/composables/useTaskStatuses'
+import { useTaskPriorities } from '~/composables/useTaskPriorities'
 
 const route = useRoute()
 const boardId = route.params.id as string
@@ -468,6 +624,26 @@ const {
 const { addGroup, renameGroup, deleteGroup, toggleCollapse, reorderGroups } = useTaskGroups()
 const { deleteBoard } = useBoards()
 
+// Carregar status e prioridades para exibir cores corretas
+const { statuses, fetchStatuses } = useTaskStatuses(boardId)
+const { priorities, fetchPriorities } = useTaskPriorities(boardId)
+
+// Helper para obter status por ID
+const getStatusById = (statusId: string | null) => {
+  if (!statusId) return null
+  return statuses.value.find(s => s.id === statusId)
+}
+
+// Helper para obter prioridade por ID
+const getPriorityById = (priorityId: string | null) => {
+  if (!priorityId) return null
+  return priorities.value.find(p => p.id === priorityId)
+}
+
+// Preferência: modo de visualização (horizontal/vertical)
+const viewMode = ref<'horizontal' | 'vertical'>('horizontal')
+const viewModeStorageKey = `board-view-mode-${boardId}`
+
 // Preferência: mostrar grupos vazios (persiste em localStorage)
 const showEmptyGroups = ref(true)
 const storageKey = `board-show-empty-${boardId}`
@@ -483,8 +659,18 @@ function loadShowEmptyPref() {
     
     const archivedSaved = localStorage.getItem(archivedStorageKey)
     if (archivedSaved !== null) showArchived.value = archivedSaved === 'true'
+    
+    const viewModeSaved = localStorage.getItem(viewModeStorageKey)
+    if (viewModeSaved !== null) viewMode.value = viewModeSaved as 'horizontal' | 'vertical'
   }
 }
+
+// Watch view mode changes and save to localStorage
+watch(viewMode, (newMode) => {
+  if (import.meta.client) {
+    localStorage.setItem(viewModeStorageKey, newMode)
+  }
+})
 
 function toggleShowEmptyGroups() {
   showEmptyGroups.value = !showEmptyGroups.value
@@ -902,6 +1088,10 @@ const boardMembersComposable = useBoardMembers()
 const showDeleteBoardModal = ref(false)
 const deletingBoard = ref(false)
 
+// Task Modal
+const showTaskModal = ref(false)
+const selectedTaskId = ref<string | null>(null)
+
 function openCreateTask(groupId: string) {
   newTaskTitle.value = ''
   creatingInGroup.value = groupId
@@ -1045,13 +1235,59 @@ async function confirmDeleteBoard() {
   }
 }
 
+function formatDate(dateStr: string | null): string {
+  if (!dateStr) return ''
+  const date = new Date(dateStr)
+  return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+}
+
+function openTaskModal(taskId: string) {
+  console.log('[openTaskModal] Opening task:', taskId)
+  selectedTaskId.value = taskId
+  showTaskModal.value = true
+}
+
+function handleTaskUpdated(patch: { field: string; value: unknown }) {
+  // Atualizar a tarefa localmente
+  if (!selectedTaskId.value) return
+  
+  for (const groupId in tasksByGroup.value) {
+    const tasks = tasksByGroup.value[groupId]
+    if (!tasks) continue
+    const task = tasks.find(t => t.id === selectedTaskId.value)
+    if (task) {
+      (task as any)[patch.field] = patch.value
+      break
+    }
+  }
+}
+
+function handleTaskDeletedFromModal(taskId: string) {
+  // Remove a tarefa de todos os grupos localmente
+  for (const groupId in tasksByGroup.value) {
+    const tasks = tasksByGroup.value[groupId]
+    if (!tasks) continue
+    const index = tasks.findIndex(t => t.id === taskId)
+    if (index !== -1) {
+      tasks.splice(index, 1)
+      break
+    }
+  }
+  showTaskModal.value = false
+  selectedTaskId.value = null
+}
+
 async function load() {
   await fetchAll(showArchived.value)
 }
 
 onMounted(async () => {
   loadShowEmptyPref()
-  await fetchAll(showArchived.value)
+  await Promise.all([
+    fetchAll(showArchived.value),
+    fetchStatuses(),
+    fetchPriorities()
+  ])
   
   // Check if there's a task query param to open automatically
   if (route.query.task) {
@@ -1062,3 +1298,50 @@ onMounted(async () => {
   }
 })
 </script>
+
+<style scoped>
+/* Transição de expansão para grupos colapsados */
+.expand-enter-active,
+.expand-leave-active {
+  transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.expand-enter-from,
+.expand-leave-to {
+  opacity: 0;
+  max-height: 0;
+}
+
+.expand-enter-to,
+.expand-leave-from {
+  opacity: 1;
+  max-height: 2000px;
+}
+
+/* Transição de lista para reordenação */
+.list-move {
+  transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.list-enter-active,
+.list-leave-active {
+  transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.list-enter-from {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+.list-leave-to {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+/* Estado de drag */
+.dragging {
+  opacity: 0.4;
+  transform: scale(0.98);
+}
+</style>

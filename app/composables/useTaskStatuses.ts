@@ -3,14 +3,59 @@ import type { Tables } from '#shared/types/database'
 
 export type TaskStatus = Tables<'task_statuses'>
 
+// Cache global compartilhado entre todas as instâncias
+const statusesCache = new Map<string, {
+  data: TaskStatus[]
+  timestamp: number
+  loading: Promise<void> | null
+}>()
+
+const CACHE_TTL = 60000 // 1 minuto
+
 export function useTaskStatuses(boardId: string) {
   const supabase = useNuxtApp().$supabase as any
 
   const statuses = ref<TaskStatus[]>([])
   const loading = ref(false)
   const error = ref<string | null>(null)
+  
+  // Carregar do cache imediatamente se disponível
+  const cached = statusesCache.get(boardId)
+  if (cached && (Date.now() - cached.timestamp) < CACHE_TTL) {
+    statuses.value = cached.data
+  }
 
   async function fetchStatuses() {
+    // Verificar cache primeiro
+    const cached = statusesCache.get(boardId)
+    if (cached) {
+      const age = Date.now() - cached.timestamp
+      if (age < CACHE_TTL) {
+        // Cache válido
+        statuses.value = cached.data
+        return
+      }
+      
+      // Se já está carregando, aguardar
+      if (cached.loading) {
+        await cached.loading
+        statuses.value = statusesCache.get(boardId)?.data ?? []
+        return
+      }
+    }
+    
+    // Criar promise de loading para evitar requisições duplicadas
+    let resolveLoading: () => void
+    const loadingPromise = new Promise<void>((resolve) => {
+      resolveLoading = resolve
+    })
+    
+    statusesCache.set(boardId, {
+      data: cached?.data ?? [],
+      timestamp: cached?.timestamp ?? 0,
+      loading: loadingPromise
+    })
+    
     loading.value = true
     error.value = null
     try {
@@ -21,12 +66,21 @@ export function useTaskStatuses(boardId: string) {
         .order('sort_order', { ascending: true })
 
       if (fetchError) throw fetchError
+      
       statuses.value = data ?? []
+      
+      // Atualizar cache
+      statusesCache.set(boardId, {
+        data: data ?? [],
+        timestamp: Date.now(),
+        loading: null
+      })
     } catch (e: any) {
       error.value = e.message ?? 'Unknown error'
       statuses.value = []
     } finally {
       loading.value = false
+      resolveLoading!()
     }
   }
 
@@ -67,6 +121,8 @@ export function useTaskStatuses(boardId: string) {
 
       if (data) {
         statuses.value.push(data)
+        // Invalidar cache
+        statusesCache.delete(boardId)
       }
 
       return data
@@ -105,6 +161,8 @@ export function useTaskStatuses(boardId: string) {
         if (index !== -1) {
           statuses.value[index] = data
         }
+        // Invalidar cache
+        statusesCache.delete(boardId)
       }
 
       return true
@@ -131,7 +189,8 @@ export function useTaskStatuses(boardId: string) {
         if (updateError) throw updateError
       }
 
-      // Recarregar statuses
+      // Invalidar cache e recarregar
+      statusesCache.delete(boardId)
       await fetchStatuses()
       return true
     } catch (e: any) {
@@ -153,3 +212,6 @@ export function useTaskStatuses(boardId: string) {
     reorderStatuses,
   }
 }
+
+// Exportar cache para acesso externo
+export { statusesCache }

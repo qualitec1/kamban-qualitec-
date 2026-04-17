@@ -93,11 +93,13 @@
                     :status-id="currentStatusId"
                     @update:status-id="currentStatusId = $event"
                   />
-                  <AssigneeCell
-                    v-else-if="col.key === 'assignee'"
-                    :task-id="task.id"
-                    :board-id="task.board_id"
-                  />
+                  <div v-else-if="col.key === 'assignee'" @click.stop>
+                    <AssigneeCell
+                      :task-id="task.id"
+                      :board-id="task.board_id"
+                      :initial-assignees="task.assignees"
+                    />
+                  </div>
                 </div>
               </template>
             </template>
@@ -202,11 +204,13 @@
                 :status-id="currentStatusId"
                 @update:status-id="currentStatusId = $event"
               />
-              <AssigneeCell
-                v-else-if="col.key === 'assignee'"
-                :task-id="task.id"
-                :board-id="task.board_id"
-              />
+              <div v-else-if="col.key === 'assignee'" @click.stop>
+                <AssigneeCell
+                  :task-id="task.id"
+                  :board-id="task.board_id"
+                  :initial-assignees="task.assignees"
+                />
+              </div>
             </div>
           </template>
         </template>

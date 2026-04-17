@@ -293,6 +293,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useTaskAssignees } from '~/composables/useTaskAssignees'
+import { useSubtaskAssignees } from '~/composables/useSubtaskAssignees'
 import { useBoardMembers } from '~/composables/useBoardMembers'
 import { useBoardGuests } from '~/composables/useBoardGuests'
 import type { Database } from '#shared/types/database'
@@ -302,15 +303,24 @@ type AccessRole = Database['public']['Enums']['board_access_role']
 const props = defineProps<{
   taskId: string
   boardId: string
+  initialAssignees?: any[] // Assignees que já vêm com a tarefa
+  isSubtask?: boolean // Flag para indicar se é uma subtask
 }>()
 
 const emit = defineEmits<{
   (e: 'update', assignees: any[]): void
 }>()
 
-const { assignees, loading, fetchAssignees, addAssignee, removeAssignee } = useTaskAssignees(props.taskId)
+const { assignees, loading, fetchAssignees, addAssignee, removeAssignee } = props.isSubtask 
+  ? useSubtaskAssignees(props.taskId)
+  : useTaskAssignees(props.taskId)
 const { members, loading: loadingMembers, fetchMembers, getUserRole, canEdit, addMember } = useBoardMembers()
 const { orgUsers, fetchOrgUsers } = useBoardGuests()
+
+// Se temos assignees iniciais, usar eles imediatamente
+if (props.initialAssignees && props.initialAssignees.length > 0) {
+  assignees.value = props.initialAssignees
+}
 
 const open = ref(false)
 const rootRef = ref<HTMLElement | null>(null)
@@ -399,19 +409,21 @@ async function toggleAssignee(userId: string) {
   // Persist to database sem recarregar
   try {
     const supabase = useNuxtApp().$supabase as any
+    const tableName = props.isSubtask ? 'subtask_assignees' : 'task_assignees'
+    const idColumn = props.isSubtask ? 'subtask_id' : 'task_id'
     
     if (assigned) {
       const { error: deleteError } = await supabase
-        .from('task_assignees')
+        .from(tableName)
         .delete()
-        .eq('task_id', props.taskId)
+        .eq(idColumn, props.taskId)
         .eq('user_id', userId)
       
       if (deleteError) throw deleteError
     } else {
       const { error: insertError } = await supabase
-        .from('task_assignees')
-        .insert({ task_id: props.taskId, user_id: userId })
+        .from(tableName)
+        .insert({ [idColumn]: props.taskId, user_id: userId })
       
       if (insertError) throw insertError
     }
@@ -438,10 +450,13 @@ async function removeAssigneeById(userId: string) {
   // Persist to database sem recarregar
   try {
     const supabase = useNuxtApp().$supabase as any
+    const tableName = props.isSubtask ? 'subtask_assignees' : 'task_assignees'
+    const idColumn = props.isSubtask ? 'subtask_id' : 'task_id'
+    
     const { error: deleteError } = await supabase
-      .from('task_assignees')
+      .from(tableName)
       .delete()
-      .eq('task_id', props.taskId)
+      .eq(idColumn, props.taskId)
       .eq('user_id', userId)
     
     if (deleteError) {
@@ -580,7 +595,10 @@ function onClickOutside(e: MouseEvent) {
 }
 
 onMounted(async () => {
-  fetchAssignees()
+  // Só buscar assignees se não foram passados via prop
+  if (!props.initialAssignees || props.initialAssignees.length === 0) {
+    fetchAssignees()
+  }
   fetchMembers(props.boardId)
   fetchOrgUsers()
   userRole.value = await getUserRole(props.boardId)

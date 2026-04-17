@@ -5,9 +5,9 @@ import { createClient } from '@supabase/supabase-js'
 
 type SupabaseClient = ReturnType<typeof createClient<Database>>
 
-export function useTaskAssignees(taskId: string) {
+export function useSubtaskAssignees(subtaskId: string) {
   function getClient(): SupabaseClient {
-    if (import.meta.server) throw new Error('[useTaskAssignees] SSR not supported')
+    if (import.meta.server) throw new Error('[useSubtaskAssignees] SSR not supported')
     return useNuxtApp().$supabase as SupabaseClient
   }
 
@@ -18,7 +18,7 @@ export function useTaskAssignees(taskId: string) {
   // Flag para evitar chamadas simultâneas
   let fetchPromise: Promise<void> | null = null
 
-  async function fetchAssignees(id: string = taskId) {
+  async function fetchAssignees(id: string = subtaskId) {
     // Se já está carregando, retorna a promise existente
     if (fetchPromise) {
       return fetchPromise
@@ -29,9 +29,9 @@ export function useTaskAssignees(taskId: string) {
     
     fetchPromise = (async () => {
       try {
-        const supabase = getClient()
+        const supabase = getClient() as any
         const { data, error: fetchError } = await supabase
-          .from('task_assignees')
+          .from('subtask_assignees')
           .select(`
             user_id,
             profiles:user_id (
@@ -41,7 +41,7 @@ export function useTaskAssignees(taskId: string) {
               avatar_url
             )
           `)
-          .eq('task_id', id)
+          .eq('subtask_id', id)
 
         if (fetchError) throw fetchError
 
@@ -60,12 +60,12 @@ export function useTaskAssignees(taskId: string) {
     return fetchPromise
   }
 
-  async function addAssignee(userId: string, id: string = taskId) {
+  async function addAssignee(userId: string, id: string = subtaskId) {
     try {
-      const supabase = getClient()
+      const supabase = getClient() as any
       const { error: insertError } = await supabase
-        .from('task_assignees')
-        .insert({ task_id: id, user_id: userId })
+        .from('subtask_assignees')
+        .insert({ subtask_id: id, user_id: userId })
 
       if (insertError) throw insertError
 
@@ -77,13 +77,13 @@ export function useTaskAssignees(taskId: string) {
     }
   }
 
-  async function removeAssignee(userId: string, id: string = taskId) {
+  async function removeAssignee(userId: string, id: string = subtaskId) {
     try {
-      const supabase = getClient()
+      const supabase = getClient() as any
       const { error: deleteError } = await supabase
-        .from('task_assignees')
+        .from('subtask_assignees')
         .delete()
-        .eq('task_id', id)
+        .eq('subtask_id', id)
         .eq('user_id', userId)
 
       if (deleteError) throw deleteError

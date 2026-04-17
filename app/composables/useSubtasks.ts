@@ -10,27 +10,64 @@ export function useSubtasks(taskId: string) {
   const loading = ref(false)
   const creating = ref(false)
   const error = ref<string | null>(null)
+  
+  // Flag para evitar chamadas simultâneas
+  let fetchPromise: Promise<void> | null = null
 
   async function fetchSubtasks() {
+    // Se já está carregando, retorna a promise existente
+    if (fetchPromise) {
+      return fetchPromise
+    }
+    
     loading.value = true
     error.value = null
     
-    try {
-      const { data, error: fetchError } = await supabase
-        .from('subtasks')
-        .select('*')
-        .eq('task_id', taskId)
-        .order('sort_order', { ascending: true })
-      
-      if (fetchError) throw fetchError
-      subtasks.value = data || []
-    } catch (err: any) {
-      console.error('Erro ao buscar subtarefas:', err)
-      error.value = err.message
-      subtasks.value = []
-    } finally {
-      loading.value = false
-    }
+    fetchPromise = (async () => {
+      try {
+        const { data, error: fetchError } = await supabase
+          .from('subtasks')
+          .select(`
+            *,
+            subtask_assignees (
+              user_id,
+              profiles:user_id (
+                id,
+                full_name,
+                email,
+                avatar_url
+              )
+            )
+          `)
+          .eq('task_id', taskId)
+          .order('sort_order', { ascending: true })
+        
+        if (fetchError) throw fetchError
+        
+        // Processar assignees
+        const processedSubtasks = (data || []).map((subtask: any) => {
+          const assignees = (subtask.subtask_assignees || [])
+            .map((sa: any) => sa.profiles)
+            .filter(Boolean)
+          
+          return {
+            ...subtask,
+            assignees
+          }
+        })
+        
+        subtasks.value = processedSubtasks
+      } catch (err: any) {
+        console.error('Erro ao buscar subtarefas:', err)
+        error.value = err.message
+        subtasks.value = []
+      } finally {
+        loading.value = false
+        fetchPromise = null
+      }
+    })()
+    
+    return fetchPromise
   }
 
   async function createSubtask(title: string) {

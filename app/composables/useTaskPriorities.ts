@@ -3,14 +3,59 @@ import type { Tables } from '#shared/types/database'
 
 export type TaskPriority = Tables<'task_priorities'>
 
+// Cache global compartilhado entre todas as instâncias
+const prioritiesCache = new Map<string, {
+  data: TaskPriority[]
+  timestamp: number
+  loading: Promise<void> | null
+}>()
+
+const CACHE_TTL = 60000 // 1 minuto
+
 export function useTaskPriorities(boardId: string) {
   const supabase = useNuxtApp().$supabase as any
 
   const priorities = ref<TaskPriority[]>([])
   const loading = ref(false)
   const error = ref<string | null>(null)
+  
+  // Carregar do cache imediatamente se disponível
+  const cached = prioritiesCache.get(boardId)
+  if (cached && (Date.now() - cached.timestamp) < CACHE_TTL) {
+    priorities.value = cached.data
+  }
 
   async function fetchPriorities() {
+    // Verificar cache primeiro
+    const cached = prioritiesCache.get(boardId)
+    if (cached) {
+      const age = Date.now() - cached.timestamp
+      if (age < CACHE_TTL) {
+        // Cache válido
+        priorities.value = cached.data
+        return
+      }
+      
+      // Se já está carregando, aguardar
+      if (cached.loading) {
+        await cached.loading
+        priorities.value = prioritiesCache.get(boardId)?.data ?? []
+        return
+      }
+    }
+    
+    // Criar promise de loading para evitar requisições duplicadas
+    let resolveLoading: () => void
+    const loadingPromise = new Promise<void>((resolve) => {
+      resolveLoading = resolve
+    })
+    
+    prioritiesCache.set(boardId, {
+      data: cached?.data ?? [],
+      timestamp: cached?.timestamp ?? 0,
+      loading: loadingPromise
+    })
+    
     loading.value = true
     error.value = null
     try {
@@ -21,12 +66,21 @@ export function useTaskPriorities(boardId: string) {
         .order('sort_order', { ascending: true })
 
       if (fetchError) throw fetchError
+      
       priorities.value = data ?? []
+      
+      // Atualizar cache
+      prioritiesCache.set(boardId, {
+        data: data ?? [],
+        timestamp: Date.now(),
+        loading: null
+      })
     } catch (e: any) {
       error.value = e.message ?? 'Unknown error'
       priorities.value = []
     } finally {
       loading.value = false
+      resolveLoading!()
     }
   }
 
@@ -66,7 +120,9 @@ export function useTaskPriorities(boardId: string) {
       if (createError) throw createError
 
       if (data) {
-        priorities.value.push(data)
+        priorities.value.push(data as TaskPriority)
+        // Invalidar cache
+        prioritiesCache.delete(boardId)
       }
 
       return data
@@ -103,8 +159,10 @@ export function useTaskPriorities(boardId: string) {
       if (data) {
         const index = priorities.value.findIndex(p => p.id === priorityId)
         if (index !== -1) {
-          priorities.value[index] = data
+          priorities.value[index] = data as TaskPriority
         }
+        // Invalidar cache
+        prioritiesCache.delete(boardId)
       }
 
       return true
@@ -131,7 +189,8 @@ export function useTaskPriorities(boardId: string) {
         if (updateError) throw updateError
       }
 
-      // Recarregar prioridades
+      // Invalidar cache e recarregar
+      prioritiesCache.delete(boardId)
       await fetchPriorities()
       return true
     } catch (e: any) {
@@ -153,3 +212,6 @@ export function useTaskPriorities(boardId: string) {
     reorderPriorities,
   }
 }
+
+// Exportar cache para acesso externo
+export { prioritiesCache }

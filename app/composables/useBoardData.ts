@@ -112,8 +112,8 @@ export function useBoardData(boardId: string) {
     console.log('[useBoardData] Iniciando loadFreshData para boardId:', boardId)
     console.log('[useBoardData] User:', user.value?.id, 'isMaster:', isMaster.value)
     
-    // Executar TODAS as queries em paralelo
-    const [boardResult, groupsResult, roleResult] = await Promise.all([
+    // Executar TODAS as queries em paralelo (incluindo status, prioridades e membros)
+    const [boardResult, groupsResult, roleResult, statusesResult, prioritiesResult, membersResult] = await Promise.all([
       // Query 1: Board
       supabase
         .from('boards')
@@ -136,12 +136,42 @@ export function useBoardData(boardId: string) {
             .eq('board_id', boardId)
             .eq('user_id', user.value.id)
             .single()
-        : Promise.resolve({ data: null, error: null })
+        : Promise.resolve({ data: null, error: null }),
+      
+      // Query 4: Status (pré-carregar para cache)
+      supabase
+        .from('task_statuses')
+        .select('id, board_id, name, color, sort_order')
+        .eq('board_id', boardId)
+        .order('sort_order', { ascending: true }),
+      
+      // Query 5: Prioridades (pré-carregar para cache)
+      supabase
+        .from('task_priorities')
+        .select('id, board_id, name, color, sort_order')
+        .eq('board_id', boardId)
+        .order('sort_order', { ascending: true }),
+      
+      // Query 6: Membros do board (pré-carregar para cache)
+      supabase
+        .from('board_members')
+        .select(`
+          board_id,
+          user_id,
+          access_role,
+          profiles:user_id (
+            id, full_name, email, avatar_url, role_global
+          )
+        `)
+        .eq('board_id', boardId)
     ])
 
     console.log('[useBoardData] Board result:', { data: boardResult.data, error: boardResult.error })
     console.log('[useBoardData] Groups result:', { count: groupsResult.data?.length, error: groupsResult.error })
     console.log('[useBoardData] Role result:', { data: roleResult.data, error: roleResult.error })
+    console.log('[useBoardData] Statuses result:', { count: statusesResult.data?.length, error: statusesResult.error })
+    console.log('[useBoardData] Priorities result:', { count: prioritiesResult.data?.length, error: prioritiesResult.error })
+    console.log('[useBoardData] Members result:', { count: membersResult.data?.length, error: membersResult.error })
 
     // Processar resultados
     if (boardResult.error) {
@@ -160,16 +190,76 @@ export function useBoardData(boardId: string) {
     groups.value = groupsResult.data || []
     accessRole.value = isMaster.value ? 'owner' : (roleResult.data?.access_role ?? null)
     
+    // Pré-popular cache de status e prioridades
+    if (!statusesResult.error && statusesResult.data) {
+      const { statusesCache } = await import('./useTaskStatuses')
+      statusesCache.set(boardId, {
+        data: statusesResult.data,
+        timestamp: Date.now(),
+        loading: null
+      })
+      console.log('[useBoardData] Cache de status populado com', statusesResult.data.length, 'itens')
+    }
+    
+    if (!prioritiesResult.error && prioritiesResult.data) {
+      const { prioritiesCache } = await import('./useTaskPriorities')
+      prioritiesCache.set(boardId, {
+        data: prioritiesResult.data,
+        timestamp: Date.now(),
+        loading: null
+      })
+      console.log('[useBoardData] Cache de prioridades populado com', prioritiesResult.data.length, 'itens')
+    }
+    
+    if (!membersResult.error && membersResult.data) {
+      const { membersCache } = await import('./useBoardMembers')
+      const membersData = (membersResult.data || []).map((item: any) => ({
+        board_id: item.board_id,
+        user_id: item.user_id,
+        access_role: item.access_role,
+        profile: item.profiles
+      }))
+      membersCache.set(boardId, {
+        data: membersData,
+        timestamp: Date.now(),
+        loading: null
+      })
+      console.log('[useBoardData] Cache de membros populado com', membersData.length, 'itens')
+    }
+    
     console.log('[useBoardData] Dados carregados - Board:', board.value?.name, 'Groups:', groups.value.length, 'Role:', accessRole.value)
 
-    // Query 4: Tarefas de TODOS os grupos em UMA ÚNICA query
+    // Query 6: Tarefas de TODOS os grupos em UMA ÚNICA query (incluindo responsáveis)
     if (groups.value.length > 0) {
       console.log('[useBoardData] Carregando tarefas para', groups.value.length, 'grupos')
       const groupIds = groups.value.map(g => g.id)
       
       const tasksQuery = supabase
         .from('tasks')
-        .select('id, title, group_id, board_id, status_id, priority_id, due_date, start_date, description, notes, budget, updated_at, position')
+        .select(`
+          id, 
+          title, 
+          group_id, 
+          board_id, 
+          status_id, 
+          priority_id, 
+          due_date, 
+          start_date, 
+          description, 
+          notes, 
+          budget, 
+          updated_at, 
+          position,
+          task_assignees (
+            user_id,
+            profiles:user_id (
+              id,
+              full_name,
+              email,
+              avatar_url
+            )
+          )
+        `)
         .in('group_id', groupIds)
         .order('position', { ascending: true })
 
@@ -188,13 +278,22 @@ export function useBoardData(boardId: string) {
       }
 
       if (!tasksError && tasksData) {
-        // Agrupar tarefas por group_id
+        // Agrupar tarefas por group_id e processar assignees
         const grouped: Record<string, TaskRow[]> = {}
         groups.value.forEach(g => { grouped[g.id] = [] })
         
         tasksData.forEach((task: any) => {
           if (grouped[task.group_id]) {
-            grouped[task.group_id].push(task)
+            // Processar assignees
+            const assignees = (task.task_assignees || [])
+              .map((ta: any) => ta.profiles)
+              .filter(Boolean)
+            
+            // Adicionar tarefa com assignees processados
+            grouped[task.group_id].push({
+              ...task,
+              assignees // Adicionar assignees diretamente na tarefa
+            })
           }
         })
 
