@@ -8,14 +8,16 @@ export default defineEventHandler(async (event) => {
   try {
     const isValid = await verifyEmailConfig()
     
+    const config = useRuntimeConfig()
+    
     if (isValid) {
       return {
         success: true,
         message: 'Email configuration is valid and working',
         config: {
-          smtp: useRuntimeConfig().emailSmtp,
-          port: useRuntimeConfig().emailPort,
-          user: useRuntimeConfig().emailUser
+          smtp: config.emailSmtp,
+          port: config.emailPort,
+          user: config.emailUser
         }
       }
     } else {

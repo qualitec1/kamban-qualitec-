@@ -16,7 +16,8 @@ export default defineNuxtConfig({
     emailUser: process.env.NUXT_EMAIL_USER ?? '',
     emailPass: process.env.NUXT_EMAIL_PASS ?? '',
     emailSmtp: process.env.NUXT_EMAIL_SMTP ?? '',
-    emailPort: process.env.NUXT_EMAIL_PORT ?? '587',
+    emailPort: process.env.NUXT_EMAIL_PORT ?? '465',
+    emailFromName: process.env.NUXT_EMAIL_FROM_NAME ?? 'Sistema Kanban',
     
     // Public keys (exposed to client)
     public: {

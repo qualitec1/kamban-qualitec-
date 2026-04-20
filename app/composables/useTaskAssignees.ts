@@ -62,6 +62,8 @@ export function useTaskAssignees(taskId: string) {
 
   async function addAssignee(userId: string, id: string = taskId) {
     try {
+      console.log('[useTaskAssignees] Adding assignee:', { taskId: id, userId })
+      
       const supabase = getClient()
       const { error: insertError } = await supabase
         .from('task_assignees')
@@ -69,9 +71,23 @@ export function useTaskAssignees(taskId: string) {
 
       if (insertError) throw insertError
 
+      console.log('[useTaskAssignees] Assignee added successfully, fetching updated list...')
       await fetchAssignees(id)
+      
+      // Enviar email de notificação automaticamente
+      console.log('[useTaskAssignees] Attempting to send email notification...')
+      try {
+        const { sendTaskAssignedEmail } = useEmailNotifications()
+        const emailSent = await sendTaskAssignedEmail(id, userId)
+        console.log('[useTaskAssignees] Email notification result:', emailSent)
+      } catch (emailError) {
+        console.error('[useTaskAssignees] Failed to send assignment email:', emailError)
+        // Não falhar a operação se o email não for enviado
+      }
+      
       return true
     } catch (e: any) {
+      console.error('[useTaskAssignees] Error adding assignee:', e)
       error.value = e.message ?? 'Unknown error'
       return false
     }

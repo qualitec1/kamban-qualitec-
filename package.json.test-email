@@ -1,0 +1,5 @@
+{
+  "scripts": {
+    "test:email": "tsx scripts/test-email-notification.ts"
+  }
+}
