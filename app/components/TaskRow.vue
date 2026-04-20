@@ -22,8 +22,8 @@
           </button>
           <div v-else class="flex-shrink-0 w-8" />
           
-          <!-- Título editável inline (fixo) - largura reduzida para caber mais colunas -->
-          <div class="pr-2 py-3" style="width: 140px; min-width: 140px; max-width: 140px;">
+          <!-- Título editável inline (fixo) - largura maior para mobile -->
+          <div class="pr-2 py-3" style="width: 180px; min-width: 180px; max-width: 180px;">
             <TitleCell
               :task-id="task.id"
               :board-id="task.board_id"
@@ -40,11 +40,11 @@
           class="flex-1 overflow-x-auto overflow-y-visible scrollbar-mobile snap-x snap-mandatory touch-pan-x pointer-events-auto"
           @scroll="onRowScroll"
         >
-          <div class="flex items-center gap-1 pr-4 py-3 min-h-[44px] pointer-events-auto">
+          <div class="flex items-center gap-2 pr-4 py-3 min-h-[44px] pointer-events-auto">
             <!-- Todas as colunas na ordem configurada (exceto título) -->
             <template v-for="col in orderedColumns" :key="col.key">
               <template v-if="isVisible(col.key)">
-                <div class="flex-shrink-0 snap-start pointer-events-auto" style="width: 110px; min-width: 110px;">
+                <div class="flex-shrink-0 snap-start pointer-events-auto" style="width: 140px; min-width: 140px;">
                   <TimelineCell
                     v-if="col.key === 'timeline'"
                     :task-id="task.id"

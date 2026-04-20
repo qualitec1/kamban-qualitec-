@@ -6,8 +6,8 @@
       <!-- Espaço para seta de expansão -->
       <div class="flex-shrink-0 w-8" />
       
-      <!-- Coluna de título (fixa) - largura reduzida -->
-      <div class="py-3" style="width: 140px; min-width: 140px; max-width: 140px;">
+      <!-- Coluna de título (fixa) - largura maior para mobile -->
+      <div class="py-3" style="width: 180px; min-width: 180px; max-width: 180px;">
         <div class="text-xs font-semibold text-neutral-600 uppercase tracking-wide px-2">
           Tarefa
         </div>
@@ -20,13 +20,13 @@
       class="flex-1 overflow-x-auto scrollbar-thin touch-pan-x"
       @scroll="onHeaderScroll"
     >
-      <div class="flex items-center gap-1 pr-4 py-3">
-        <!-- Colunas dinâmicas baseadas na visibilidade (exceto título) - largura fixa menor -->
+      <div class="flex items-center gap-2 pr-4 py-3">
+        <!-- Colunas dinâmicas baseadas na visibilidade (exceto título) - largura maior -->
         <template v-for="col in orderedColumns" :key="col.key">
           <div
             v-if="isVisible(col.key)"
             class="relative flex-shrink-0 group/col"
-            style="width: 110px; min-width: 110px;"
+            style="width: 140px; min-width: 140px;"
           >
             <div class="text-xs font-semibold text-neutral-600 uppercase tracking-wide px-2 truncate">
               {{ col.label }}
