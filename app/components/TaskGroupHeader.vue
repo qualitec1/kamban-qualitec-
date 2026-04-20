@@ -48,10 +48,17 @@
   </div>
 
   <!-- Layout desktop: tudo em uma linha -->
-  <div class="hidden lg:flex items-center gap-2 px-4 py-3 bg-neutral-50 border-b border-neutral-100 overflow-x-auto scrollbar-thin">
+  <div class="hidden lg:flex items-center gap-2 px-4 min-h-[52px] min-w-max bg-neutral-50 border-b border-neutral-100">
     
-    <!-- Coluna de expansão (subtarefas) -->
-    <div class="flex-shrink-0 w-8" />
+    <!-- Espaço para botão expand/collapse (p-0.5 + w-4 + h-4 = ~20px) -->
+    <div class="flex-shrink-0 p-0.5">
+      <div class="w-4 h-4" />
+    </div>
+    
+    <!-- Espaço para drag handle (p-0.5 + w-4 + h-4 = ~20px) -->
+    <div class="flex-shrink-0 p-0.5">
+      <div class="w-4 h-4" />
+    </div>
     
     <!-- Coluna de título (sempre visível) -->
     <div 

@@ -4,8 +4,8 @@
     <button
       v-if="canEditTasks"
       type="button"
-      class="w-full min-w-[120px] max-w-[200px] px-4 py-2.5 rounded-lg text-sm font-medium text-white text-center transition-all hover:opacity-90 min-h-[44px] lg:min-h-[36px]"
-      :style="{ backgroundColor: currentStatus?.color || '#94a3b8' }"
+      class="w-full min-w-[120px] max-w-[200px] px-4 py-2 rounded-lg text-sm font-medium text-white text-center transition-all hover:opacity-90 flex items-center justify-center"
+      :style="{ backgroundColor: currentStatus?.color || '#94a3b8', minHeight: '36px' }"
       @click="toggleDropdown"
     >
       {{ currentStatus?.name || 'Sem status' }}
@@ -14,8 +14,8 @@
     <!-- Read-only view (sem permissão) -->
     <div
       v-else
-      class="w-full min-w-[120px] max-w-[200px] px-4 py-2.5 rounded-lg text-sm font-medium text-white text-center cursor-default min-h-[44px] lg:min-h-[36px]"
-      :style="{ backgroundColor: currentStatus?.color || '#94a3b8' }"
+      class="w-full min-w-[120px] max-w-[200px] px-4 py-2 rounded-lg text-sm font-medium text-white text-center cursor-default flex items-center justify-center"
+      :style="{ backgroundColor: currentStatus?.color || '#94a3b8', minHeight: '36px' }"
     >
       {{ currentStatus?.name || 'Sem status' }}
     </div>
