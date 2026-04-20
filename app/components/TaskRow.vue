@@ -111,7 +111,7 @@
       </div>
 
       <!-- Layout desktop: tudo em uma linha -->
-      <div class="hidden lg:flex items-center gap-2 px-4 py-3 min-h-[44px]">
+      <div class="hidden lg:flex items-center gap-2 px-4 min-h-[52px] min-w-max">
         <!-- Botão expand/collapse subtarefas - sempre visível se pode editar -->
         <button
           v-if="canEdit"

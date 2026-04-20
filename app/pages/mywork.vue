@@ -40,6 +40,7 @@
             :key="task.id"
             :task="task"
             variant="danger"
+            @click="navigateToTask(task)"
           />
         </div>
       </section>
@@ -58,6 +59,7 @@
             :key="task.id"
             :task="task"
             variant="warning"
+            @click="navigateToTask(task)"
           />
         </div>
       </section>
@@ -75,6 +77,7 @@
             v-for="task in boardGroup.tasks"
             :key="task.id"
             :task="task"
+            @click="navigateToTask(task)"
           />
         </div>
       </section>
@@ -86,12 +89,18 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
 import { useMyTasks } from '~/composables/useMyTasks'
+import type { TaskWithBoard } from '~/composables/useMyTasks'
 
 const { tasks, loading, error, fetchMyTasks, getTasksByBoard, getTasksDueToday, getOverdueTasks } = useMyTasks()
 
 const tasksByBoard = computed(() => getTasksByBoard())
 const dueTodayTasks = computed(() => getTasksDueToday())
 const overdueTasks = computed(() => getOverdueTasks())
+
+function navigateToTask(task: TaskWithBoard) {
+  // Navegar para o board com a tarefa selecionada
+  navigateTo(`/boards/${task.board.id}`)
+}
 
 onMounted(() => {
   console.log('MyWork page mounted')
