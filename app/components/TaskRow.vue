@@ -1,10 +1,10 @@
 <template>
   <div>
     <!-- Linha principal da tarefa -->
-    <div class="border-b border-neutral-100 hover:bg-neutral-50 relative motion-interactive">
+    <div class="border-b border-neutral-100 hover:bg-neutral-50 relative motion-interactive pointer-events-none">
       
       <!-- Layout mobile: coluna fixa + área rolável -->
-      <div class="flex lg:hidden">
+      <div class="flex lg:hidden pointer-events-auto">
         <!-- Área fixa à esquerda (seta + título) -->
         <div class="flex-shrink-0 flex items-center gap-1 bg-white z-20 border-r border-neutral-100 sticky left-0">
           <!-- Botão expand/collapse subtarefas -->
@@ -111,7 +111,7 @@
       </div>
 
       <!-- Layout desktop: tudo em uma linha -->
-      <div class="hidden lg:flex items-center gap-2 px-4 py-3 min-h-[44px]">
+      <div class="hidden lg:flex items-center gap-2 px-4 py-3 min-h-[44px] pointer-events-auto">
         <!-- Botão expand/collapse subtarefas - sempre visível se pode editar -->
         <button
           v-if="canEdit"
