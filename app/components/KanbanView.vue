@@ -1,11 +1,53 @@
 <template>
-  <div class="flex-1 overflow-y-auto p-4">
+  <div class="flex-1 overflow-y-auto p-2 sm:p-4">
+    <!-- Filtro de grupos para mobile (< 640px) -->
+    <div class="sm:hidden mb-4 flex items-center gap-2 overflow-x-auto pb-2">
+      <button
+        @click="showAllGroups = !showAllGroups"
+        class="px-3 py-2 rounded-lg text-label-sm font-medium transition-all flex items-center gap-2 flex-shrink-0"
+        :class="showAllGroups 
+          ? 'bg-neutral-100 text-neutral-700 border border-neutral-300' 
+          : 'bg-primary-500 text-white shadow-md'"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+        </svg>
+        {{ showAllGroups ? 'Filtrar grupo' : 'Ver todos' }}
+      </button>
+      
+      <!-- Dropdown de seleção de grupo (apenas quando filtrado) -->
+      <div v-if="!showAllGroups" class="flex-1 overflow-x-auto">
+        <div class="flex gap-2 min-w-max">
+          <button
+            v-for="group in visibleGroups"
+            :key="`tab-${group.id}`"
+            @click="activeTabGroupId = group.id"
+            class="px-4 py-2 rounded-lg text-label-sm font-medium transition-all whitespace-nowrap"
+            :class="activeTabGroupId === group.id 
+              ? 'bg-primary-500 text-white shadow-md' 
+              : 'bg-white text-neutral-600 hover:bg-neutral-100 border border-neutral-200'"
+            :style="activeTabGroupId === group.id ? `background-color: ${group.color || '#1C325C'}` : ''"
+          >
+            {{ group.name }}
+            <span class="ml-1.5 opacity-75">({{ tasksByGroup[group.id]?.length || 0 }})</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Grid 2 colunas em desktop, 1 coluna em mobile -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 auto-rows-min">
+    <div 
+      class="gap-4 auto-rows-min transition-all w-full"
+      :class="isMobile && !showAllGroups ? 'flex flex-col' : 'grid grid-cols-1 lg:grid-cols-2'"
+      @touchstart="handleSwipeStart"
+      @touchend="handleSwipeEnd"
+    >
       <!-- Coluna para cada grupo -->
       <KanbanColumn
         v-for="(group, index) in visibleGroups"
         :key="group.id"
+        v-show="isMobile && !showAllGroups ? activeTabGroupId === group.id : true"
+        :class="{ 'scale-[0.98] sm:scale-100': isMobile && !showAllGroups }"
         :ref="el => setColumnRef(group.id, el)"
         :group="group"
         :tasks="tasksByGroup[group.id] || []"
@@ -36,7 +78,7 @@
       />
 
       <!-- Botão adicionar coluna -->
-      <div v-if="canEdit" class="min-h-[200px]">
+      <div v-if="canEdit && (!isMobile || showAllGroups)" class="min-h-[200px] w-full">
         <button
           @click="$emit('add-group')"
           class="w-full h-full min-h-[200px] flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-neutral-300 hover:border-primary-400 hover:bg-primary-50 text-muted hover:text-primary-600 transition-all"
@@ -66,7 +108,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import type { TaskRow } from '~/composables/useTasks'
 
 const props = defineProps<{
@@ -104,6 +146,64 @@ const touchDraggingTaskId = ref<string | null>(null)
 const touchDragTargetGroupId = ref<string | null>(null)
 const columnRefs = ref<Map<string, any>>(new Map())
 const dropZoneRefs = ref<Map<string, any>>(new Map())
+
+// Mobile tab state
+const activeTabGroupId = ref<string | null>(null)
+const isMobile = ref(false)
+const showAllGroups = ref(true) // Por padrão mostra todos os grupos
+
+// Swipe gesture state
+const touchStartX = ref(0)
+const touchEndX = ref(0)
+
+// Inicializar tab ativo com primeiro grupo
+onMounted(() => {
+  if (props.visibleGroups.length > 0) {
+    activeTabGroupId.value = props.visibleGroups[0].id
+  }
+  
+  // Detectar mobile
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', checkMobile)
+})
+
+function checkMobile() {
+  isMobile.value = window.innerWidth < 640
+}
+
+function handleSwipeStart(e: TouchEvent) {
+  if (!isMobile.value || showAllGroups.value) return
+  touchStartX.value = e.touches[0].clientX
+}
+
+function handleSwipeEnd(e: TouchEvent) {
+  if (!isMobile.value || showAllGroups.value) return
+  touchEndX.value = e.changedTouches[0].clientX
+  handleSwipeGesture()
+}
+
+function handleSwipeGesture() {
+  const swipeThreshold = 50
+  const diff = touchStartX.value - touchEndX.value
+  
+  if (Math.abs(diff) < swipeThreshold) return
+  
+  const currentIndex = props.visibleGroups.findIndex(g => g.id === activeTabGroupId.value)
+  if (currentIndex === -1) return
+  
+  // Swipe left (próximo)
+  if (diff > 0 && currentIndex < props.visibleGroups.length - 1) {
+    activeTabGroupId.value = props.visibleGroups[currentIndex + 1].id
+  }
+  // Swipe right (anterior)
+  else if (diff < 0 && currentIndex > 0) {
+    activeTabGroupId.value = props.visibleGroups[currentIndex - 1].id
+  }
+}
 
 function setColumnRef(groupId: string, el: any) {
   if (el) {

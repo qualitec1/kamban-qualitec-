@@ -71,7 +71,7 @@
         {{ showEmptyGroups ? 'Ocultar vazios' : 'Mostrar vazios' }}
       </button>
 
-      <BaseButton v-if="canEdit" variant="primary" size="sm" @click="$emit('addGroup')">
+      <BaseButton v-if="canEdit" variant="primary" size="sm" @click="handleAddGroup">
         <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
         </svg>
@@ -95,7 +95,7 @@
 </template>
 
 <script setup lang="ts">
-defineProps<{
+const props = defineProps<{
   boardId: string
   viewMode: 'horizontal' | 'vertical'
   showArchived: boolean
@@ -103,11 +103,15 @@ defineProps<{
   canEdit: boolean
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   'update:viewMode': [mode: 'horizontal' | 'vertical']
   toggleArchived: []
   toggleEmptyGroups: []
   addGroup: []
   deleteBoard: []
 }>()
+
+function handleAddGroup() {
+  emit('addGroup')
+}
 </script>

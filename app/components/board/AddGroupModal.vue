@@ -36,7 +36,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 
 const props = defineProps<{
   modelValue: boolean
@@ -49,7 +49,6 @@ const emit = defineEmits<{
   submit: [data: { name: string; color: string }]
 }>()
 
-const isOpen = ref(props.modelValue)
 const groupName = ref('')
 const selectedColor = ref('#6366f1')
 
@@ -59,16 +58,21 @@ const colors = [
   '#10b981', '#14b8a6', '#06b6d4', '#0ea5e9', '#3b82f6'
 ]
 
-watch(() => props.modelValue, (val) => {
-  isOpen.value = val
-  if (val) {
-    groupName.value = ''
-    selectedColor.value = '#6366f1'
+// Use computed para sincronizar com v-model
+const isOpen = computed({
+  get: () => props.modelValue,
+  set: (val) => {
+    emit('update:modelValue', val)
+    if (val) {
+      // Reset form when opening
+      groupName.value = ''
+      selectedColor.value = '#6366f1'
+    }
   }
 })
 
-watch(isOpen, (val) => {
-  emit('update:modelValue', val)
+watch(() => props.modelValue, (val) => {
+  console.log('[AddGroupModal] modelValue changed to:', val)
 })
 
 function handleSubmit() {

@@ -36,9 +36,10 @@ export function useBoardPage(boardId: string) {
   
   async function fetchMembers() {
     if (!boardId) return
-    const { members, fetchMembers: fetch } = useBoardMembers(boardId)
-    await fetch()
-    boardMembers.value = members.value
+    const { members, fetchMembers: fetch } = useBoardMembers()
+    await fetch(boardId)
+    // Extrair apenas os profiles dos membros
+    boardMembers.value = members.value.map(m => m.profile)
   }
 
   // View preferences
@@ -125,16 +126,20 @@ export function useBoardPage(boardId: string) {
   }
 
   async function handleAddGroup(data: { name: string; color: string }) {
-    const success = await addGroup(
+    console.log('[useBoardPage] handleAddGroup called with:', data)
+    const result = await addGroup({
       boardId,
-      data.name,
-      data.color,
-      addPosition.value,
-      addRefGroupId.value
-    )
-    if (success) {
+      name: data.name,
+      color: data.color,
+      position: addPosition.value,
+      refGroupId: addRefGroupId.value
+    })
+    console.log('[useBoardPage] addGroup result:', result)
+    if (result) {
       showAddGroupModal.value = false
       await fetchAll(showArchived.value)
+    } else {
+      console.error('[useBoardPage] Failed to add group')
     }
   }
 
@@ -214,17 +219,24 @@ export function useBoardPage(boardId: string) {
   }
 
   function onTaskDragStart(taskId: string) {
+    console.log('[useBoardPage] onTaskDragStart called with taskId:', taskId)
     draggingTaskId.value = taskId
+    console.log('[useBoardPage] draggingTaskId set to:', draggingTaskId.value)
   }
 
   function onTaskDragEnd() {
+    console.log('[useBoardPage] onTaskDragEnd called')
     draggingTaskId.value = null
     dragOverTaskId.value = null
     dragOverGroupId.value = null
   }
 
   async function onTaskDrop(targetTaskId: string, groupId: string) {
-    if (!draggingTaskId.value) return
+    console.log('[useBoardPage] onTaskDrop called', { targetTaskId, groupId, draggingTaskId: draggingTaskId.value })
+    if (!draggingTaskId.value) {
+      console.warn('[useBoardPage] No draggingTaskId, aborting drop')
+      return
+    }
 
     const tasks = tasksByGroup.value[groupId] || []
     const draggingTask = Object.values(tasksByGroup.value)
@@ -235,7 +247,7 @@ export function useBoardPage(boardId: string) {
 
     const sourceGroupId = draggingTask.group_id
     
-    // If moving to different group
+    // If moving to different group (Kanban or Table cross-group drag)
     if (sourceGroupId !== groupId) {
       await moveTaskToGroup({
         taskId: draggingTaskId.value,
@@ -247,8 +259,8 @@ export function useBoardPage(boardId: string) {
         refreshGroupTasks(sourceGroupId),
         refreshGroupTasks(groupId)
       ])
-    } else {
-      // Reordering within same group
+    } else if (targetTaskId) {
+      // Reordering within same group (Table view only - has targetTaskId)
       const targetIdx = tasks.findIndex(t => t.id === targetTaskId)
       if (targetIdx === -1) return
       
@@ -264,9 +276,11 @@ export function useBoardPage(boardId: string) {
       await reorderTasks({ groupId, taskIds: newIds })
       onTaskDragEnd()
       await refreshGroupTasks(groupId)
+    } else {
+      // Same group but no targetTaskId (Kanban - just end drag)
+      onTaskDragEnd()
     }
   }
-
   return {
     // Data
     board,

@@ -133,10 +133,11 @@
           :draggable="true"
           class="flex-shrink-0 opacity-0 hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing p-0.5 text-muted"
           title="Arrastar para reordenar"
+          @mousedown="console.log('[TaskRow] Drag handle mousedown')"
           @dragstart="handleDragStart"
           @dragend="handleDragEnd"
         >
-          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+          <svg class="w-4 h-4 pointer-events-none" fill="currentColor" viewBox="0 0 24 24">
             <path d="M8 6a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm0 8a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm0 8a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm8-16a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm0 8a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm0 8a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/>
           </svg>
         </div>
@@ -262,7 +263,7 @@ const props = defineProps<{
 const emit = defineEmits<{ 
   (e: 'taskUpdated', id: string): void
   (e: 'taskDeleted', id: string): void
-  (e: 'dragStart'): void
+  (e: 'dragStart', taskId: string): void
   (e: 'dragEnd'): void
 }>()
 
@@ -315,14 +316,24 @@ function onTaskDeleted(taskId: string) {
   emit('taskDeleted', taskId)
 }
 
-function handleDragStart() {
-  console.log('[TaskRow] Drag start for task:', props.task.id, props.task.title)
-  emit('dragStart')
+function handleDragStart(event: DragEvent) {
+  console.log('[TaskRow] handleDragStart called', {
+    taskId: props.task.id,
+    taskTitle: props.task.title,
+    event
+  })
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = 'move'
+    event.dataTransfer.setData('text/plain', props.task.id)
+  }
+  emit('dragStart', props.task.id)
+  console.log('[TaskRow] dragStart event emitted with taskId:', props.task.id)
 }
 
 function handleDragEnd() {
-  console.log('[TaskRow] Drag end for task:', props.task.id)
+  console.log('[TaskRow] handleDragEnd called for task:', props.task.id)
   emit('dragEnd')
+  console.log('[TaskRow] dragEnd event emitted')
 }
 
 const { orderedColumns, isVisible } = useBoardColumns(props.task.board_id)

@@ -1,6 +1,6 @@
 <template>
   <div 
-    class="flex flex-col bg-neutral-50 rounded-xl border border-neutral-200 transition-all min-h-[300px]"
+    class="flex flex-col bg-neutral-50 rounded-xl border border-neutral-200 transition-all min-h-[300px] w-full max-w-full"
     :class="{ 
       'border-primary-400 bg-primary-50': isDragOver,
       'opacity-50 scale-95': draggingColumnId === group.id,
@@ -64,6 +64,7 @@
     <div 
       class="flex-1 overflow-y-auto p-3 space-y-2"
       @dragover.prevent="handleDragOver"
+      @dragleave="handleDragLeave"
       @drop="handleDrop"
     >
       <KanbanCard

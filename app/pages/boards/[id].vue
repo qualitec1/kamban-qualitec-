@@ -70,24 +70,27 @@
       @open-task="(taskId: string) => { selectedTaskId = taskId; showTaskModal = true }"
       @add-group="openAddGroup()"
       @create-task="(data: { groupId: string; title: string }) => saveNewTask(data.groupId, data.title)"
-      @move-task="(data: { taskId: string; sourceGroupId: string; targetGroupId: string }) => onTaskDrop(data.taskId, data.targetGroupId)"
+      @move-task="(data: { taskId: string; sourceGroupId: string; targetGroupId: string }) => onTaskDrop('', data.targetGroupId)"
       @reorder-groups="(data: { fromGroupId: string; toGroupId: string }) => onGroupDrop(data.toGroupId)"
       @share-group="openShareGroupModal"
     />
 
     <!-- Modals -->
     <AddGroupModal
+      v-if="showAddGroupModal"
       v-model="showAddGroupModal"
       @submit="handleAddGroup"
     />
 
     <ShareGroupModal
+      v-if="showShareGroupModal"
       v-model="showShareGroupModal"
       :members="boardMembers"
       @submit="handleShareGroup"
     />
 
     <DeleteBoardModal
+      v-if="showDeleteBoardModal"
       v-model="showDeleteBoardModal"
       :board-name="(board as any)?.name ?? 'este quadro'"
       @confirm="handleDeleteBoard"
@@ -110,6 +113,9 @@ import { ref, onMounted, watch } from 'vue'
 import { useRoute } from '#imports'
 import { useBoardPage } from '~/composables/useBoardPage'
 import { useBoards } from '~/composables/useBoards'
+import AddGroupModal from '~/components/board/AddGroupModal.vue'
+import ShareGroupModal from '~/components/board/ShareGroupModal.vue'
+import DeleteBoardModal from '~/components/board/DeleteBoardModal.vue'
 
 const route = useRoute()
 const boardId = route.params.id as string
@@ -169,6 +175,11 @@ const {
   fetchMembers,
   refreshGroupTasks
 } = useBoardPage(boardId)
+
+// Debug: watch showAddGroupModal
+watch(showAddGroupModal, (val) => {
+  console.log('[boards/[id].vue] showAddGroupModal changed to:', val)
+})
 
 const { deleteBoard } = useBoards()
 

@@ -49,7 +49,7 @@ const initialsTextSize = computed(() => {
 })
 
 const displayName = computed(() =>
-  props.profile.full_name || props.profile.email
+  props.profile.full_name || props.profile.email || 'Usuário'
 )
 
 const initials = computed(() => {
@@ -62,7 +62,10 @@ const initials = computed(() => {
       .join('')
       .toUpperCase()
   }
-  return props.profile.email.slice(0, 2).toUpperCase()
+  if (props.profile.email) {
+    return props.profile.email.slice(0, 2).toUpperCase()
+  }
+  return '??'
 })
 
 function onImageError() {

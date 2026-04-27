@@ -139,14 +139,6 @@
             <span v-else class="text-sm text-neutral-400 italic">Nenhum responsável</span>
           </div>
         </div>
-
-        <!-- Etiquetas -->
-        <div class="space-y-1.5">
-          <label class="text-xs font-medium text-neutral-500 uppercase tracking-wide">Etiquetas</label>
-          <div class="min-h-[44px]">
-            <LabelsCell :key="taskId" :task-id="taskId" :board-id="boardId" :max-visible="5" />
-          </div>
-        </div>
       </div>
 
       <!-- Descrição / Notas -->

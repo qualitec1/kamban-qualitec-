@@ -1,14 +1,14 @@
 <template>
-  <!-- Layout mobile: coluna fixa + área rolável -->
-  <div class="flex lg:hidden items-center bg-neutral-50 border-b border-neutral-100 overflow-hidden">
+  <!-- Layout mobile: coluna fixa + área rolável (estilo Monday.com) -->
+  <div class="flex lg:hidden items-center bg-neutral-50 border-b border-neutral-200 overflow-hidden">
     <!-- Área fixa à esquerda (título) -->
-    <div class="flex-shrink-0 flex items-center gap-2 bg-neutral-50 z-20 border-r border-neutral-100 sticky left-0">
+    <div class="flex-shrink-0 flex items-center gap-0.5 bg-neutral-50 z-20 border-r border-neutral-200 sticky left-0 shadow-sm">
       <!-- Espaço para seta de expansão -->
-      <div class="flex-shrink-0 w-8" />
+      <div class="flex-shrink-0 w-9" />
       
-      <!-- Coluna de título (fixa) - largura maior para mobile -->
-      <div class="py-3" style="width: 180px; min-width: 180px; max-width: 180px;">
-        <div class="text-xs font-semibold text-neutral-600 uppercase tracking-wide px-2">
+      <!-- Coluna de título (fixa) -->
+      <div class="py-2.5 flex-1" style="min-width: 140px; max-width: 180px;">
+        <div class="text-xs font-semibold text-neutral-600 uppercase tracking-wide px-3">
           Tarefa
         </div>
       </div>
@@ -20,12 +20,12 @@
       class="flex-1 overflow-x-auto scrollbar-thin touch-pan-x"
       @scroll="onHeaderScroll"
     >
-      <div class="flex items-center gap-2 pr-4 py-3">
-        <!-- Colunas dinâmicas baseadas na visibilidade (exceto título) - largura maior -->
+      <div class="flex items-center py-2.5">
+        <!-- Colunas dinâmicas baseadas na visibilidade (exceto título) -->
         <template v-for="col in orderedColumns" :key="col.key">
           <div
             v-if="isVisible(col.key)"
-            class="relative flex-shrink-0 group/col"
+            class="relative flex-shrink-0 group/col px-2 border-r border-neutral-100"
             style="width: 140px; min-width: 140px;"
           >
             <div class="text-xs font-semibold text-neutral-600 uppercase tracking-wide px-2 truncate">
