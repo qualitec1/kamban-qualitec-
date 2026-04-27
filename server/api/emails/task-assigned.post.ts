@@ -3,13 +3,19 @@ import type { Database } from '#shared/types/database'
 import nodemailer from 'nodemailer'
 
 export default defineEventHandler(async (event) => {
+  const startTime = Date.now()
+  console.log('\n========== [TASK-ASSIGNED EMAIL] START ==========')
+  console.log('[task-assigned] Timestamp:', new Date().toISOString())
+  
   try {
     const body = await readBody(event)
     const { taskId, assigneeId } = body
 
-    console.log('[task-assigned API] Received request:', { taskId, assigneeId })
+    console.log('[task-assigned] ✓ Request received')
+    console.log('[task-assigned] Payload:', { taskId, assigneeId })
 
     if (!taskId || !assigneeId) {
+      console.log('[task-assigned] ✗ Missing required fields')
       throw createError({
         statusCode: 400,
         message: 'taskId and assigneeId are required'
@@ -18,11 +24,14 @@ export default defineEventHandler(async (event) => {
 
     const config = useRuntimeConfig()
     
-    console.log('[task-assigned API] Config check:', {
+    console.log('[task-assigned] ✓ Config loaded')
+    console.log('[task-assigned] Config check:', {
       hasSupabaseUrl: !!config.public.supabaseUrl,
       hasSupabaseKey: !!config.supabaseServiceRoleKey,
       hasEmailUser: !!config.emailUser,
-      hasEmailSmtp: !!config.emailSmtp
+      hasEmailSmtp: !!config.emailSmtp,
+      hasEmailPort: !!config.emailPort,
+      hasEmailPass: !!config.emailPass
     })
     
     // Criar cliente Supabase com service role
@@ -31,24 +40,36 @@ export default defineEventHandler(async (event) => {
       config.supabaseServiceRoleKey
     )
 
+    console.log('[task-assigned] ✓ Supabase client created')
+
     // Buscar preferências de email do usuário
-    console.log('[task-assigned API] Fetching email preferences for user:', assigneeId)
-    const { data: prefs } = await supabase
+    console.log('[task-assigned] → Fetching email preferences for user:', assigneeId)
+    const { data: prefs, error: prefsError } = await supabase
       .from('email_preferences')
       .select('*')
       .eq('user_id', assigneeId)
       .single()
 
-    console.log('[task-assigned API] Preferences:', prefs)
+    if (prefsError) {
+      console.log('[task-assigned] ⚠ Email preferences error:', prefsError.message)
+    }
+
+    console.log('[task-assigned] ✓ Preferences fetched:', {
+      found: !!prefs,
+      enabled: prefs?.task_assigned_enabled,
+      maxPerHour: prefs?.max_emails_per_hour,
+      maxPerDay: prefs?.max_emails_per_day
+    })
 
     // Se notificações desabilitadas, retornar
     if (!prefs || !prefs.task_assigned_enabled) {
-      console.log('[task-assigned API] Notifications disabled, skipping email')
+      console.log('[task-assigned] ⊘ Notifications disabled, skipping email')
+      console.log('========== [TASK-ASSIGNED EMAIL] END (skipped) ==========\n')
       return { success: true, skipped: true, reason: 'notifications_disabled' }
     }
 
     // Verificar rate limit
-    console.log('[task-assigned API] Checking rate limits...')
+    console.log('[task-assigned] → Checking rate limits...')
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString()
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
 
@@ -62,7 +83,7 @@ export default defineEventHandler(async (event) => {
       const emailsLastHour = recentEmails.filter(e => e.sent_at >= oneHourAgo).length
       const emailsLastDay = recentEmails.length
 
-      console.log('[task-assigned API] Rate limit check:', {
+      console.log('[task-assigned] ✓ Rate limit check:', {
         emailsLastHour,
         maxPerHour: prefs.max_emails_per_hour,
         emailsLastDay,
@@ -70,18 +91,20 @@ export default defineEventHandler(async (event) => {
       })
 
       if (emailsLastHour >= prefs.max_emails_per_hour) {
-        console.log('[task-assigned API] Hourly limit exceeded')
+        console.log('[task-assigned] ⊘ Hourly limit exceeded')
+        console.log('========== [TASK-ASSIGNED EMAIL] END (rate limited) ==========\n')
         return { success: false, error: 'hourly_limit_exceeded' }
       }
       if (emailsLastDay >= prefs.max_emails_per_day) {
-        console.log('[task-assigned API] Daily limit exceeded')
+        console.log('[task-assigned] ⊘ Daily limit exceeded')
+        console.log('========== [TASK-ASSIGNED EMAIL] END (rate limited) ==========\n')
         return { success: false, error: 'daily_limit_exceeded' }
       }
     }
 
     // Buscar todas as informações da tarefa
-    console.log('[task-assigned API] Fetching task details...')
-    const { data: task } = await supabase
+    console.log('[task-assigned] → Fetching task details...')
+    const { data: task, error: taskError } = await supabase
       .from('tasks')
       .select(`
         *,
@@ -111,37 +134,50 @@ export default defineEventHandler(async (event) => {
       .eq('id', taskId)
       .single()
 
+    if (taskError) {
+      console.error('[task-assigned] ✗ Task fetch error:', taskError)
+      throw taskError
+    }
+
     if (!task) {
-      console.error('[task-assigned API] Task not found')
+      console.error('[task-assigned] ✗ Task not found')
       throw createError({ statusCode: 404, message: 'Task not found' })
     }
 
-    console.log('[task-assigned API] Task found:', {
+    console.log('[task-assigned] ✓ Task found:', {
+      id: task.id,
       title: task.title,
       board: task.board?.name,
+      group: task.group?.name,
       assignees: task.assignees?.length
     })
 
     // Buscar informações do destinatário
-    console.log('[task-assigned API] Fetching assignee details...')
-    const { data: assignee } = await supabase
+    console.log('[task-assigned] → Fetching assignee details...')
+    const { data: assignee, error: assigneeError } = await supabase
       .from('profiles')
       .select('id, full_name, email')
       .eq('id', assigneeId)
       .single()
 
+    if (assigneeError) {
+      console.error('[task-assigned] ✗ Assignee fetch error:', assigneeError)
+      throw assigneeError
+    }
+
     if (!assignee || !assignee.email) {
-      console.error('[task-assigned API] Assignee not found or no email')
+      console.error('[task-assigned] ✗ Assignee not found or no email')
       throw createError({ statusCode: 404, message: 'Assignee not found or no email' })
     }
 
-    console.log('[task-assigned API] Assignee found:', {
+    console.log('[task-assigned] ✓ Assignee found:', {
+      id: assignee.id,
       name: assignee.full_name,
       email: assignee.email
     })
 
     // Configurar transporter de email
-    console.log('[task-assigned API] Configuring email transporter...')
+    console.log('[task-assigned] → Configuring email transporter...')
     const transporter = nodemailer.createTransport({
       host: config.emailSmtp,
       port: parseInt(config.emailPort),
@@ -151,6 +187,8 @@ export default defineEventHandler(async (event) => {
         pass: config.emailPass
       }
     })
+
+    console.log('[task-assigned] ✓ Transporter configured')
 
     // Formatar data
     const formatDate = (date: string | null) => {
@@ -171,222 +209,76 @@ export default defineEventHandler(async (event) => {
       }).format(budget)
     }
 
-    // Montar HTML do email
+    // Formatar tamanho de arquivo
+    const formatFileSize = (bytes: number | null) => {
+      if (!bytes) return ''
+      const mb = bytes / (1024 * 1024)
+      if (mb >= 1) return `${mb.toFixed(1)} MB`
+      const kb = bytes / 1024
+      return `${kb.toFixed(1)} KB`
+    }
+
+    // Montar HTML do email usando o template premium
     const taskUrl = `${config.public.appUrl}/boards/${task.board.id}?task=${task.id}`
     
-    const subtasksHtml = task.subtasks && task.subtasks.length > 0
-      ? `
-        <div style="margin-top: 20px;">
-          <h3 style="color: #374151; font-size: 16px; margin-bottom: 10px;">Subtarefas (${task.subtasks.length})</h3>
-          <ul style="list-style: none; padding: 0;">
-            ${task.subtasks.map(st => `
-              <li style="padding: 8px; background: ${st.is_done ? '#f0fdf4' : '#f9fafb'}; margin-bottom: 5px; border-radius: 4px; border-left: 3px solid ${st.is_done ? '#22c55e' : '#d1d5db'};">
-                <span style="color: ${st.is_done ? '#16a34a' : '#6b7280'};">
-                  ${st.is_done ? '✓' : '○'} ${st.title}
-                </span>
-                ${st.status ? `<span style="margin-left: 10px; padding: 2px 8px; background: ${st.status.color}20; color: ${st.status.color}; border-radius: 3px; font-size: 12px;">${st.status.name}</span>` : ''}
-                ${st.due_date ? `<span style="margin-left: 10px; color: #6b7280; font-size: 12px;">📅 ${formatDate(st.due_date)}</span>` : ''}
-              </li>
-            `).join('')}
-          </ul>
-        </div>
-      `
-      : ''
-
-    const attachmentsHtml = task.attachments && task.attachments.length > 0
-      ? `
-        <div style="margin-top: 20px;">
-          <h3 style="color: #374151; font-size: 16px; margin-bottom: 10px;">Anexos (${task.attachments.length})</h3>
-          <ul style="list-style: none; padding: 0;">
-            ${task.attachments.map(att => `
-              <li style="padding: 8px; background: #f9fafb; margin-bottom: 5px; border-radius: 4px;">
-                📎 ${att.file_name}
-                ${att.category ? `<span style="margin-left: 10px; color: #6b7280; font-size: 12px;">(${att.category})</span>` : ''}
-              </li>
-            `).join('')}
-          </ul>
-        </div>
-      `
-      : ''
-
-    const labelsHtml = task.labels && task.labels.length > 0
-      ? `
-        <div style="margin-top: 15px;">
-          ${task.labels.map(tl => `
-            <span style="display: inline-block; padding: 4px 12px; background: ${tl.label.color}20; color: ${tl.label.color}; border-radius: 12px; font-size: 12px; margin-right: 5px;">
-              ${tl.label.name}
-            </span>
-          `).join('')}
-        </div>
-      `
-      : ''
-
-    const assigneesHtml = task.assignees && task.assignees.length > 1
-      ? `
-        <div style="margin-top: 15px;">
-          <strong style="color: #6b7280; font-size: 14px;">Outros responsáveis:</strong>
-          ${task.assignees
-            .filter(a => a.user.id !== assigneeId)
-            .map(a => `<span style="margin-left: 5px; color: #374151;">${a.user.full_name}</span>`)
-            .join(', ')}
-        </div>
-      `
-      : ''
-
-    const emailHtml = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      </head>
-      <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #374151; margin: 0; padding: 0; background-color: #f3f4f6;">
-        <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-          
-          <!-- Header -->
-          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center;">
-            <h1 style="color: #ffffff; margin: 0; font-size: 24px;">Nova Tarefa Atribuída</h1>
-          </div>
-
-          <!-- Content -->
-          <div style="padding: 30px;">
-            
-            <p style="font-size: 16px; color: #374151; margin-bottom: 20px;">
-              Olá <strong>${assignee.full_name}</strong>,
-            </p>
-
-            <p style="font-size: 14px; color: #6b7280; margin-bottom: 25px;">
-              Você foi atribuído a uma nova tarefa no quadro <strong>${task.board.name}</strong>.
-            </p>
-
-            <!-- Task Card -->
-            <div style="background: #f9fafb; border-left: 4px solid ${task.group?.color || '#6366f1'}; padding: 20px; border-radius: 6px; margin-bottom: 25px;">
-              
-              <h2 style="color: #111827; font-size: 20px; margin: 0 0 15px 0;">
-                ${task.title}
-              </h2>
-
-              ${task.description ? `
-                <div style="background: #ffffff; padding: 15px; border-radius: 4px; margin-bottom: 15px;">
-                  <strong style="color: #6b7280; font-size: 14px;">Descrição:</strong>
-                  <p style="color: #374151; margin: 8px 0 0 0; white-space: pre-wrap;">${task.description}</p>
-                </div>
-              ` : ''}
-
-              ${task.notes ? `
-                <div style="background: #fffbeb; padding: 12px; border-radius: 4px; border-left: 3px solid #f59e0b; margin-bottom: 15px;">
-                  <strong style="color: #92400e; font-size: 13px;">📝 Nota:</strong>
-                  <p style="color: #78350f; margin: 5px 0 0 0; font-size: 13px;">${task.notes}</p>
-                </div>
-              ` : ''}
-
-              <!-- Task Details Grid -->
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;">
-                
-                ${task.status ? `
-                  <div>
-                    <strong style="color: #6b7280; font-size: 13px; display: block; margin-bottom: 5px;">Status:</strong>
-                    <span style="display: inline-block; padding: 4px 12px; background: ${task.status.color}20; color: ${task.status.color}; border-radius: 4px; font-size: 13px; font-weight: 500;">
-                      ${task.status.name}
-                    </span>
-                  </div>
-                ` : ''}
-
-                ${task.priority ? `
-                  <div>
-                    <strong style="color: #6b7280; font-size: 13px; display: block; margin-bottom: 5px;">Prioridade:</strong>
-                    <span style="display: inline-block; padding: 4px 12px; background: ${task.priority.color}20; color: ${task.priority.color}; border-radius: 4px; font-size: 13px; font-weight: 500;">
-                      ${task.priority.name}
-                    </span>
-                  </div>
-                ` : ''}
-
-                ${task.start_date ? `
-                  <div>
-                    <strong style="color: #6b7280; font-size: 13px; display: block; margin-bottom: 5px;">Data de Início:</strong>
-                    <span style="color: #374151; font-size: 14px;">📅 ${formatDate(task.start_date)}</span>
-                  </div>
-                ` : ''}
-
-                ${task.due_date ? `
-                  <div>
-                    <strong style="color: #6b7280; font-size: 13px; display: block; margin-bottom: 5px;">Data de Vencimento:</strong>
-                    <span style="color: #374151; font-size: 14px;">⏰ ${formatDate(task.due_date)}</span>
-                  </div>
-                ` : ''}
-
-                ${task.budget ? `
-                  <div>
-                    <strong style="color: #6b7280; font-size: 13px; display: block; margin-bottom: 5px;">Orçamento:</strong>
-                    <span style="color: #059669; font-size: 14px; font-weight: 600;">💰 ${formatBudget(task.budget)}</span>
-                  </div>
-                ` : ''}
-
-                ${task.group ? `
-                  <div>
-                    <strong style="color: #6b7280; font-size: 13px; display: block; margin-bottom: 5px;">Grupo:</strong>
-                    <span style="display: inline-block; padding: 4px 12px; background: ${task.group.color}20; color: ${task.group.color}; border-radius: 4px; font-size: 13px;">
-                      ${task.group.name}
-                    </span>
-                  </div>
-                ` : ''}
-
-              </div>
-
-              ${labelsHtml}
-              ${assigneesHtml}
-            </div>
-
-            ${subtasksHtml}
-            ${attachmentsHtml}
-
-            <!-- CTA Button -->
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${taskUrl}" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 6px rgba(102, 126, 234, 0.3);">
-                Ver Tarefa Completa
-              </a>
-            </div>
-
-            <!-- Footer Info -->
-            <div style="border-top: 1px solid #e5e7eb; padding-top: 20px; margin-top: 30px;">
-              <p style="font-size: 12px; color: #9ca3af; margin: 5px 0;">
-                Atribuído por: <strong>${task.created_by_user?.full_name || 'Sistema'}</strong>
-              </p>
-              <p style="font-size: 12px; color: #9ca3af; margin: 5px 0;">
-                Data de criação: ${formatDate(task.created_at)}
-              </p>
-            </div>
-
-          </div>
-
-          <!-- Footer -->
-          <div style="background: #f9fafb; padding: 20px; text-align: center; border-top: 1px solid #e5e7eb;">
-            <p style="font-size: 12px; color: #6b7280; margin: 0 0 10px 0;">
-              Você está recebendo este email porque foi atribuído a uma tarefa.
-            </p>
-            <p style="font-size: 12px; color: #9ca3af; margin: 0;">
-              <a href="${config.public.appUrl}/settings" style="color: #667eea; text-decoration: none;">Gerenciar preferências de email</a>
-            </p>
-          </div>
-
-        </div>
-      </body>
-      </html>
-    `
+    // Função generateTaskAssignmentEmail é auto-importada de server/utils/emailTemplates.ts
+    const emailHtml = generateTaskAssignmentEmail({
+      assigneeName: assignee.full_name || assignee.email,
+      taskTitle: task.title,
+      taskDescription: task.description || undefined,
+      taskNotes: task.notes || undefined,
+      boardName: task.board.name,
+      groupName: task.group?.name,
+      groupColor: task.group?.color,
+      statusName: task.status?.name,
+      statusColor: task.status?.color,
+      priorityName: task.priority?.name,
+      priorityColor: task.priority?.color,
+      startDate: task.start_date ? formatDate(task.start_date) : undefined,
+      dueDate: task.due_date ? formatDate(task.due_date) : undefined,
+      budget: task.budget ? formatBudget(task.budget) : undefined,
+      subtasks: task.subtasks?.map(st => ({
+        title: st.title,
+        isDone: st.is_done,
+        statusName: st.status?.name,
+        statusColor: st.status?.color
+      })),
+      attachments: task.attachments?.map(att => ({
+        fileName: att.file_name,
+        fileSize: att.size_bytes ? formatFileSize(att.size_bytes) : undefined,
+        category: att.category || undefined
+      })),
+      taskUrl,
+      assignedBy: task.created_by_user?.full_name || 'Sistema',
+      createdAt: formatDate(task.created_at),
+      settingsUrl: `${config.public.appUrl}/settings`
+    })
 
     // Enviar email
-    console.log('[task-assigned API] Sending email to:', assignee.email)
-    await transporter.sendMail({
+    console.log('[task-assigned] → Sending email...')
+    console.log('[task-assigned] Email details:', {
+      from: `"${config.emailFromName || 'Sistema Kanban'}" <${config.emailUser}>`,
+      to: assignee.email,
+      subject: `Nova Tarefa: ${task.title}`
+    })
+    
+    const emailResult = await transporter.sendMail({
       from: `"${config.emailFromName || 'Sistema Kanban'}" <${config.emailUser}>`,
       to: assignee.email,
       subject: `Nova Tarefa: ${task.title}`,
       html: emailHtml
     })
 
-    console.log('[task-assigned API] Email sent successfully')
+    console.log('[task-assigned] ✓ Email sent successfully!')
+    console.log('[task-assigned] Email result:', {
+      messageId: emailResult.messageId,
+      accepted: emailResult.accepted,
+      rejected: emailResult.rejected
+    })
 
     // Registrar envio
-    await supabase
+    console.log('[task-assigned] → Registering email log...')
+    const { error: logError } = await supabase
       .from('email_sent_log')
       .insert({
         user_id: assigneeId,
@@ -394,14 +286,29 @@ export default defineEventHandler(async (event) => {
         task_id: taskId
       })
 
-    console.log('[task-assigned API] Log registered')
+    if (logError) {
+      console.error('[task-assigned] ⚠ Failed to log email (non-critical):', logError.message)
+    } else {
+      console.log('[task-assigned] ✓ Email log registered')
+    }
 
-    return { success: true, sent: true }
+    const duration = Date.now() - startTime
+    console.log('[task-assigned] ✓ Total duration:', duration, 'ms')
+    console.log('========== [TASK-ASSIGNED EMAIL] END (success) ==========\n')
+
+    return { success: true, sent: true, duration }
 
   } catch (error: any) {
-    console.error('[task-assigned API] Error sending task assignment email:', error)
+    const duration = Date.now() - startTime
+    console.error('\n========== [TASK-ASSIGNED EMAIL] ERROR ==========')
+    console.error('[task-assigned] ✗ Error type:', error.constructor.name)
+    console.error('[task-assigned] ✗ Error message:', error.message)
+    console.error('[task-assigned] ✗ Error stack:', error.stack)
+    console.error('[task-assigned] ✗ Duration before error:', duration, 'ms')
+    console.error('========== [TASK-ASSIGNED EMAIL] END (error) ==========\n')
+    
     throw createError({
-      statusCode: 500,
+      statusCode: error.statusCode || 500,
       message: error.message || 'Failed to send email'
     })
   }

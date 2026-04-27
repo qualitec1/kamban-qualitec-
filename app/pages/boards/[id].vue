@@ -46,7 +46,7 @@
       @save-rename="handleRenameGroup"
       @cancel-rename="editingGroupId = null"
       @share-group="openShareGroupModal"
-      @add-group="openAddGroup"
+      @add-group="(position, refGroupId) => openAddGroup(position, refGroupId)"
       @delete-group="handleDeleteGroup"
       @task-drag-start="onTaskDragStart"
       @task-drag-end="onTaskDragEnd"

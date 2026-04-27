@@ -4,8 +4,9 @@
     <button
       v-if="canEditAssignees"
       type="button"
-      class="flex items-center h-full min-h-[44px] w-full justify-center"
+      class="flex items-center h-full min-h-[44px] w-full justify-center cursor-pointer hover:bg-neutral-50 transition-colors"
       @click="toggleDropdown"
+      :disabled="loading"
       :title="assignees.length > 0 ? `${assignees.length} responsável(is)` : 'Adicionar responsável'"
     >
       <!-- Loading skeleton -->
@@ -326,7 +327,7 @@ const open = ref(false)
 const rootRef = ref<HTMLElement | null>(null)
 const dropdownRef = ref<HTMLElement | null>(null)
 const dropdownStyle = ref<Record<string, string>>({})
-const userRole = ref<string | null>(null)
+const userRole = ref<string | null>('collaborator') // Valor padrão otimista
 const searchQuery = ref('')
 
 // Invite form state
@@ -336,7 +337,11 @@ const inviteRole = ref<AccessRole>('observer')
 const inviting = ref(false)
 const inviteError = ref<string | null>(null)
 
-const canEditAssignees = computed(() => canEdit(userRole.value as any))
+const canEditAssignees = computed(() => {
+  // Se ainda não carregou o role, assumir que pode editar (otimista)
+  if (userRole.value === null) return true
+  return canEdit(userRole.value as any)
+})
 
 const filteredMembers = computed(() => {
   if (!searchQuery.value.trim()) return members.value
@@ -368,9 +373,19 @@ function calcPosition() {
 }
 
 function toggleDropdown() {
-  if (!canEditAssignees.value) return
+  console.log('[AssigneeCell] toggleDropdown called')
+  console.log('[AssigneeCell] canEditAssignees:', canEditAssignees.value)
+  console.log('[AssigneeCell] userRole:', userRole.value)
+  
+  if (!canEditAssignees.value) {
+    console.log('[AssigneeCell] Cannot edit assignees, aborting')
+    return
+  }
+  
   calcPosition()
   open.value = !open.value
+  console.log('[AssigneeCell] Dropdown open:', open.value)
+  
   if (open.value) {
     searchQuery.value = ''
   }
@@ -383,55 +398,71 @@ function isAssigned(userId: string): boolean {
 async function toggleAssignee(userId: string) {
   if (!canEditAssignees.value) return
   
+  console.log('[AssigneeCell.toggleAssignee] ========== START ==========')
+  console.log('[AssigneeCell.toggleAssignee] User ID:', userId)
+  console.log('[AssigneeCell.toggleAssignee] Task ID:', props.taskId)
+  console.log('[AssigneeCell.toggleAssignee] Is Subtask:', props.isSubtask)
+  
   const assigned = isAssigned(userId)
+  console.log('[AssigneeCell.toggleAssignee] Is currently assigned (local state):', assigned)
   
   // Salvar estado anterior
   const previousAssignees = [...assignees.value]
+  console.log('[AssigneeCell.toggleAssignee] Previous assignees (local state):', previousAssignees.map(a => ({ id: a.id, name: a.full_name })))
   
   // Optimistic update
   if (assigned) {
+    console.log('[AssigneeCell.toggleAssignee] → Removing assignee (optimistic)')
     assignees.value = assignees.value.filter(a => a.id !== userId)
   } else {
+    console.log('[AssigneeCell.toggleAssignee] → Adding assignee (optimistic)')
     const member = members.value.find(m => m.user_id === userId)
     if (member) {
-      assignees.value.push({
+      const newAssignee = {
         id: member.user_id,
         full_name: member.profile.full_name,
         email: member.profile.email,
         avatar_url: member.profile.avatar_url
-      })
+      }
+      assignees.value.push(newAssignee)
+      console.log('[AssigneeCell.toggleAssignee] ✓ Member found and added (optimistic):', newAssignee)
+    } else {
+      console.error('[AssigneeCell.toggleAssignee] ✗ Member not found in members list!')
     }
   }
 
+  console.log('[AssigneeCell.toggleAssignee] New assignees (after optimistic update):', assignees.value.map(a => ({ id: a.id, name: a.full_name })))
+
   // Emit update immediately
   emit('update', assignees.value)
+  console.log('[AssigneeCell.toggleAssignee] ✓ Update emitted')
 
-  // Persist to database sem recarregar
+  // Persist to database usando o composable (que envia email)
   try {
-    const supabase = useNuxtApp().$supabase as any
-    const tableName = props.isSubtask ? 'subtask_assignees' : 'task_assignees'
-    const idColumn = props.isSubtask ? 'subtask_id' : 'task_id'
-    
     if (assigned) {
-      const { error: deleteError } = await supabase
-        .from(tableName)
-        .delete()
-        .eq(idColumn, props.taskId)
-        .eq('user_id', userId)
-      
-      if (deleteError) throw deleteError
+      console.log('[AssigneeCell.toggleAssignee] → Calling removeAssignee()...')
+      const success = await removeAssignee(userId, props.taskId)
+      if (!success) {
+        throw new Error('Failed to remove assignee')
+      }
+      console.log('[AssigneeCell.toggleAssignee] ✓ Assignee removed successfully')
     } else {
-      const { error: insertError } = await supabase
-        .from(tableName)
-        .insert({ [idColumn]: props.taskId, user_id: userId })
-      
-      if (insertError) throw insertError
+      console.log('[AssigneeCell.toggleAssignee] → Calling addAssignee() (will check DB and trigger email)...')
+      console.log('[AssigneeCell.toggleAssignee] ⚠ Note: addAssignee will verify in DATABASE, not local state')
+      const success = await addAssignee(userId, props.taskId)
+      if (!success) {
+        throw new Error('Failed to add assignee')
+      }
+      console.log('[AssigneeCell.toggleAssignee] ✓ Assignee added successfully (email should be sent if new)')
     }
+    console.log('[AssigneeCell.toggleAssignee] ========== END (success) ==========')
   } catch (err) {
     // Reverter em caso de erro
+    console.error('[AssigneeCell.toggleAssignee] ✗ Error:', err)
     assignees.value = previousAssignees
     emit('update', previousAssignees)
-    console.error('Erro ao atualizar responsável:', err)
+    console.error('[AssigneeCell.toggleAssignee] ✓ Reverted to previous state')
+    console.log('[AssigneeCell.toggleAssignee] ========== END (error) ==========')
   }
 }
 
@@ -595,14 +626,33 @@ function onClickOutside(e: MouseEvent) {
 }
 
 onMounted(async () => {
+  console.log('[AssigneeCell] Component mounted')
+  console.log('[AssigneeCell] Props:', { taskId: props.taskId, boardId: props.boardId, isSubtask: props.isSubtask })
+  
   // Só buscar assignees se não foram passados via prop
   if (!props.initialAssignees || props.initialAssignees.length === 0) {
+    console.log('[AssigneeCell] Fetching assignees...')
     fetchAssignees()
+  } else {
+    console.log('[AssigneeCell] Using initial assignees:', props.initialAssignees.length)
   }
+  
+  console.log('[AssigneeCell] Fetching members and user role...')
   fetchMembers(props.boardId)
   fetchOrgUsers()
-  userRole.value = await getUserRole(props.boardId)
+  
+  try {
+    const role = await getUserRole(props.boardId)
+    userRole.value = role
+    console.log('[AssigneeCell] User role loaded:', role)
+    console.log('[AssigneeCell] Can edit assignees:', canEditAssignees.value)
+  } catch (error) {
+    console.error('[AssigneeCell] Error loading user role:', error)
+    // Manter valor padrão otimista
+  }
+  
   document.addEventListener('mousedown', onClickOutside)
+  console.log('[AssigneeCell] Component ready')
 })
 
 onUnmounted(() => {

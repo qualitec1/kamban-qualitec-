@@ -1,37 +1,40 @@
 <template>
   <div class="flex-1 overflow-y-auto p-2 sm:p-4">
-    <!-- Filtro de grupos para mobile (< 640px) -->
-    <div class="sm:hidden mb-4 flex items-center gap-2 overflow-x-auto pb-2">
-      <button
-        @click="showAllGroups = !showAllGroups"
-        class="px-3 py-2 rounded-lg text-label-sm font-medium transition-all flex items-center gap-2 flex-shrink-0"
-        :class="showAllGroups 
-          ? 'bg-neutral-100 text-neutral-700 border border-neutral-300' 
-          : 'bg-primary-500 text-white shadow-md'"
-      >
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-        </svg>
-        {{ showAllGroups ? 'Filtrar grupo' : 'Ver todos' }}
-      </button>
-      
-      <!-- Dropdown de seleção de grupo (apenas quando filtrado) -->
-      <div v-if="!showAllGroups" class="flex-1 overflow-x-auto">
-        <div class="flex gap-2 min-w-max">
-          <button
-            v-for="group in visibleGroups"
-            :key="`tab-${group.id}`"
-            @click="activeTabGroupId = group.id"
-            class="px-4 py-2 rounded-lg text-label-sm font-medium transition-all whitespace-nowrap"
-            :class="activeTabGroupId === group.id 
-              ? 'bg-primary-500 text-white shadow-md' 
-              : 'bg-white text-neutral-600 hover:bg-neutral-100 border border-neutral-200'"
-            :style="activeTabGroupId === group.id ? `background-color: ${group.color || '#1C325C'}` : ''"
-          >
-            {{ group.name }}
-            <span class="ml-1.5 opacity-75">({{ tasksByGroup[group.id]?.length || 0 }})</span>
-          </button>
-        </div>
+    <!-- Filtro de grupos - Lista permanente -->
+    <div class="mb-4">
+      <div class="bg-white rounded-lg border border-neutral-200 overflow-hidden">
+        <!-- Opção "Todos os grupos" -->
+        <button
+          @click="selectAllGroups"
+          class="w-full px-4 py-3 text-left text-label-sm hover:bg-neutral-50 transition-colors flex items-center gap-3 border-b border-neutral-100"
+          :class="{ 'bg-primary-50 text-primary-700 font-medium': showAllGroups }"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+          </svg>
+          <span>Todos os grupos</span>
+          <span class="ml-auto text-xs text-neutral-500">
+            ({{ Object.values(tasksByGroup).flat().length }})
+          </span>
+        </button>
+        
+        <!-- Lista de grupos -->
+        <button
+          v-for="group in visibleGroups"
+          :key="`filter-${group.id}`"
+          @click="selectGroup(group.id)"
+          class="w-full px-4 py-3 text-left text-label-sm hover:bg-neutral-50 transition-colors flex items-center gap-3 border-b border-neutral-100 last:border-b-0"
+          :class="{ 'bg-primary-50 text-primary-700 font-medium': !showAllGroups && activeTabGroupId === group.id }"
+        >
+          <div 
+            class="w-3 h-3 rounded-full flex-shrink-0"
+            :style="`background-color: ${group.color || '#6366f1'}`"
+          />
+          <span class="flex-1">{{ group.name }}</span>
+          <span class="text-xs text-neutral-500">
+            ({{ tasksByGroup[group.id]?.length || 0 }})
+          </span>
+        </button>
       </div>
     </div>
 
@@ -173,6 +176,15 @@ onUnmounted(() => {
 
 function checkMobile() {
   isMobile.value = window.innerWidth < 640
+}
+
+function selectAllGroups() {
+  showAllGroups.value = true
+}
+
+function selectGroup(groupId: string) {
+  showAllGroups.value = false
+  activeTabGroupId.value = groupId
 }
 
 function handleSwipeStart(e: TouchEvent) {
