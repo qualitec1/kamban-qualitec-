@@ -19,10 +19,13 @@ export function useTaskStatuses(boardId: string) {
   const loading = ref(false)
   const error = ref<string | null>(null)
   
-  // Carregar do cache imediatamente se disponível
+  // Carregar do cache imediatamente se disponível E válido
   const cached = statusesCache.get(boardId)
-  if (cached && (Date.now() - cached.timestamp) < CACHE_TTL) {
+  if (cached && (Date.now() - cached.timestamp) < CACHE_TTL && cached.data.length > 0) {
     statuses.value = cached.data
+  } else {
+    // Se não tem cache válido, carregar imediatamente
+    fetchStatuses()
   }
 
   async function fetchStatuses() {
