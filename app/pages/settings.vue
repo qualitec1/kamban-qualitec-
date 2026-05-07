@@ -1,45 +1,56 @@
 <template>
-  <div class="settings-page">
-    <div class="settings-container">
-      <div class="settings-sidebar">
-        <nav class="settings-nav">
-          <button 
-            :class="['nav-item', { active: activeTab === 'profile' }]"
-            @click="activeTab = 'profile'"
-          >
-            <span class="icon">👤</span>
-            <span>Perfil</span>
-          </button>
-          <button 
-            :class="['nav-item', { active: activeTab === 'notifications' }]"
-            @click="activeTab = 'notifications'"
-          >
-            <span class="icon">📧</span>
-            <span>Notificações por Email</span>
-          </button>
-          <button 
-            :class="['nav-item', { active: activeTab === 'account' }]"
-            @click="activeTab = 'account'"
-          >
-            <span class="icon">⚙️</span>
-            <span>Conta</span>
-          </button>
-        </nav>
+  <div class="min-h-screen bg-neutral-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <!-- Header -->
+      <div class="mb-8">
+        <h1 class="text-3xl font-bold text-neutral-900">Configurações</h1>
+        <p class="mt-2 text-sm text-neutral-600">Gerencie suas preferências e informações da conta</p>
       </div>
 
-      <div class="settings-content">
-        <div v-if="activeTab === 'profile'" class="tab-content">
-          <h2>Configurações de Perfil</h2>
-          <p class="tab-description">Em desenvolvimento...</p>
+      <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <!-- Sidebar -->
+        <div class="lg:col-span-1">
+          <nav class="bg-white rounded-lg shadow-sm border border-neutral-200 overflow-hidden">
+            <button 
+              v-for="tab in tabs"
+              :key="tab.id"
+              :class="[
+                'w-full flex items-center gap-3 px-4 py-3 text-sm font-medium transition-all',
+                activeTab === tab.id
+                  ? 'bg-primary-50 text-primary-700 border-l-4 border-primary-600'
+                  : 'text-neutral-700 hover:bg-neutral-50 border-l-4 border-transparent'
+              ]"
+              @click="activeTab = tab.id"
+            >
+              <component :is="tab.icon" class="w-5 h-5" />
+              <span>{{ tab.label }}</span>
+            </button>
+          </nav>
         </div>
 
-        <div v-if="activeTab === 'notifications'" class="tab-content">
-          <EmailPreferencesSettings />
-        </div>
+        <!-- Content -->
+        <div class="lg:col-span-3">
+          <div class="bg-white rounded-lg shadow-sm border border-neutral-200 p-6 lg:p-8">
+            <div v-if="activeTab === 'profile'">
+              <ProfileSettings />
+            </div>
 
-        <div v-if="activeTab === 'account'" class="tab-content">
-          <h2>Configurações de Conta</h2>
-          <p class="tab-description">Em desenvolvimento...</p>
+            <div v-if="activeTab === 'notifications'">
+              <EmailPreferencesSettings />
+            </div>
+
+            <div v-if="activeTab === 'account'">
+              <div class="text-center py-12">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-neutral-100 mb-4">
+                  <svg class="w-8 h-8 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                  </svg>
+                </div>
+                <h3 class="text-lg font-semibold text-neutral-900 mb-2">Em desenvolvimento</h3>
+                <p class="text-sm text-neutral-600">Esta seção estará disponível em breve</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -47,117 +58,36 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, h } from 'vue'
 
 definePageMeta({
-  layout: 'default',
-  middleware: ['auth-guard']
+  layout: 'default'
 })
 
-const activeTab = ref('notifications')
+const activeTab = ref('profile')
+
+const tabs = [
+  {
+    id: 'profile',
+    label: 'Perfil',
+    icon: () => h('svg', { class: 'w-5 h-5', fill: 'none', stroke: 'currentColor', viewBox: '0 0 24 24' }, [
+      h('path', { 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'stroke-width': '2', d: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' })
+    ])
+  },
+  {
+    id: 'notifications',
+    label: 'Notificações',
+    icon: () => h('svg', { class: 'w-5 h-5', fill: 'none', stroke: 'currentColor', viewBox: '0 0 24 24' }, [
+      h('path', { 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'stroke-width': '2', d: 'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z' })
+    ])
+  },
+  {
+    id: 'account',
+    label: 'Conta',
+    icon: () => h('svg', { class: 'w-5 h-5', fill: 'none', stroke: 'currentColor', viewBox: '0 0 24 24' }, [
+      h('path', { 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'stroke-width': '2', d: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z' }),
+      h('path', { 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'stroke-width': '2', d: 'M15 12a3 3 0 11-6 0 3 3 0 016 0z' })
+    ])
+  }
+]
 </script>
-
-<style scoped>
-.settings-page {
-  min-height: 100vh;
-  background: #f9fafb;
-  padding: 24px;
-}
-
-.settings-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: 250px 1fr;
-  gap: 24px;
-}
-
-.settings-sidebar {
-  background: white;
-  border-radius: 8px;
-  padding: 16px;
-  height: fit-content;
-  border: 1px solid #e5e7eb;
-}
-
-.settings-nav {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.nav-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  border: none;
-  background: transparent;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  color: #6b7280;
-  transition: all 0.2s;
-  text-align: left;
-  width: 100%;
-}
-
-.nav-item:hover {
-  background: #f3f4f6;
-  color: #111827;
-}
-
-.nav-item.active {
-  background: #eef2ff;
-  color: #6366f1;
-}
-
-.nav-item .icon {
-  font-size: 18px;
-}
-
-.settings-content {
-  background: white;
-  border-radius: 8px;
-  padding: 32px;
-  border: 1px solid #e5e7eb;
-  min-height: 600px;
-}
-
-.tab-content h2 {
-  font-size: 24px;
-  font-weight: 600;
-  color: #111827;
-  margin: 0 0 8px 0;
-}
-
-.tab-description {
-  font-size: 14px;
-  color: #6b7280;
-  margin: 0;
-}
-
-@media (max-width: 768px) {
-  .settings-container {
-    grid-template-columns: 1fr;
-  }
-
-  .settings-sidebar {
-    order: 2;
-  }
-
-  .settings-content {
-    order: 1;
-  }
-
-  .settings-nav {
-    flex-direction: row;
-    overflow-x: auto;
-  }
-
-  .nav-item span:not(.icon) {
-    display: none;
-  }
-}
-</style>

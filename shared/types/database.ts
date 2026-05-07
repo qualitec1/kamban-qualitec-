@@ -14,170 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
-      tasks: {
+      profiles: {
         Row: {
-          archived_at: string | null
-          board_id: string
-          budget: number | null
+          avatar_url: string | null
           created_at: string
-          created_by: string | null
-          description: string | null
-          due_date: string | null
-          group_id: string | null
+          email: string
+          full_name: string | null
           id: string
-          notes: string | null
-          position: number
-          priority_id: string | null
-          start_date: string | null
-          status_id: string | null
-          title: string
-          updated_at: string
+          job_title: string | null
+          organization_id: string | null
+          phone: string | null
+          role_global: Database["public"]["Enums"]["user_role"]
+          status: Database["public"]["Enums"]["user_status"]
         }
         Insert: {
-          archived_at?: string | null
-          board_id: string
-          budget?: number | null
+          avatar_url?: string | null
           created_at?: string
-          created_by?: string | null
-          description?: string | null
-          due_date?: string | null
-          group_id?: string | null
-          id?: string
-          notes?: string | null
-          position?: number
-          priority_id?: string | null
-          start_date?: string | null
-          status_id?: string | null
-          title: string
-          updated_at?: string
+          email: string
+          full_name?: string | null
+          id: string
+          job_title?: string | null
+          organization_id?: string | null
+          phone?: string | null
+          role_global?: Database["public"]["Enums"]["user_role"]
+          status?: Database["public"]["Enums"]["user_status"]
         }
         Update: {
-          archived_at?: string | null
-          board_id?: string
-          budget?: number | null
+          avatar_url?: string | null
           created_at?: string
-          created_by?: string | null
-          description?: string | null
-          due_date?: string | null
-          group_id?: string | null
+          email?: string
+          full_name?: string | null
           id?: string
-          notes?: string | null
-          position?: number
-          priority_id?: string | null
-          start_date?: string | null
-          status_id?: string | null
-          title?: string
-          updated_at?: string
+          job_title?: string | null
+          organization_id?: string | null
+          phone?: string | null
+          role_global?: Database["public"]["Enums"]["user_role"]
+          status?: Database["public"]["Enums"]["user_status"]
         }
         Relationships: [
           {
-            foreignKeyName: "tasks_board_id_fkey"
-            columns: ["board_id"]
+            foreignKeyName: "profiles_organization_id_fkey"
+            columns: ["organization_id"]
             isOneToOne: false
-            referencedRelation: "boards"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "tasks_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "tasks_group_id_fkey"
-            columns: ["group_id"]
-            isOneToOne: false
-            referencedRelation: "task_groups"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "tasks_priority_id_fkey"
-            columns: ["priority_id"]
-            isOneToOne: false
-            referencedRelation: "task_priorities"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "tasks_status_id_fkey"
-            columns: ["status_id"]
-            isOneToOne: false
-            referencedRelation: "task_statuses"
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
       }
-      task_groups: {
-        Row: {
-          board_id: string
-          color: string | null
-          id: string
-          is_collapsed: boolean
-          name: string
-          sort_order: number
-        }
-        Insert: {
-          board_id: string
-          color?: string | null
-          id?: string
-          is_collapsed?: boolean
-          name: string
-          sort_order?: number
-        }
-        Update: {
-          board_id?: string
-          color?: string | null
-          id?: string
-          is_collapsed?: boolean
-          name?: string
-          sort_order?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "task_groups_board_id_fkey"
-            columns: ["board_id"]
-            isOneToOne: false
-            referencedRelation: "boards"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      task_statuses: {
-        Row: {
-          board_id: string
-          color: string
-          id: string
-          is_done: boolean
-          name: string
-          sort_order: number
-        }
-        Insert: {
-          board_id: string
-          color?: string
-          id?: string
-          is_done?: boolean
-          name: string
-          sort_order?: number
-        }
-        Update: {
-          board_id?: string
-          color?: string
-          id?: string
-          is_done?: boolean
-          name?: string
-          sort_order?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "task_statuses_board_id_fkey"
-            columns: ["board_id"]
-            isOneToOne: false
-            referencedRelation: "boards"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      // ... other tables (truncated for brevity - add as needed)
+      // ... other tables
     }
     Views: {
       [_ in never]: never

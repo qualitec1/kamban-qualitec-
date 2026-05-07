@@ -32,6 +32,11 @@
               @open-modal="showModal = true"
             />
           </div>
+
+          <!-- Botão de lembrete (mobile) -->
+          <div class="flex-shrink-0 pr-2">
+            <TaskReminderButton :task-id="task.id" :task-title="currentTitle" />
+          </div>
         </div>
 
         <!-- Área rolável horizontalmente -->
@@ -151,6 +156,11 @@
             @update:title="currentTitle = $event"
             @open-modal="showModal = true"
           />
+        </div>
+
+        <!-- Botão de lembrete (desktop) -->
+        <div class="flex-shrink-0 pointer-events-auto">
+          <TaskReminderButton :task-id="task.id" :task-title="currentTitle" />
         </div>
 
         <!-- Todas as colunas na ordem configurada -->

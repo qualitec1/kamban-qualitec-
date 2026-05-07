@@ -79,10 +79,13 @@ const variantClasses = computed(() => {
 const dueDateClass = computed(() => {
   if (!props.task.due_date) return ''
   
+  // Parse a data como local, não UTC
+  const [year, month, day] = props.task.due_date.split('T')[0].split('-')
+  const dueDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day))
+  dueDate.setHours(0, 0, 0, 0)
+  
   const today = new Date()
   today.setHours(0, 0, 0, 0)
-  const dueDate = new Date(props.task.due_date)
-  dueDate.setHours(0, 0, 0, 0)
   
   if (dueDate < today) return 'text-danger-600 font-medium'
   if (dueDate.getTime() === today.getTime()) return 'text-warning-600 font-medium'
@@ -90,7 +93,10 @@ const dueDateClass = computed(() => {
 })
 
 function formatDate(dateString: string): string {
-  const date = new Date(dateString)
+  // Parse a data como local, não UTC
+  const [year, month, day] = dateString.split('T')[0].split('-')
+  const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day))
+  
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   const tomorrow = new Date(today)

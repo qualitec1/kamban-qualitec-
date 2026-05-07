@@ -21,7 +21,10 @@
       @touchend="handleTouchEnd"
       @touchcancel="handleTouchCancel"
     >
-      <h3 class="text-body-sm font-medium text-neutral-900 mb-2">{{ task.title }}</h3>
+      <div class="flex items-center justify-between gap-2 mb-2">
+        <h3 class="text-body-sm font-medium text-neutral-900 flex-1">{{ task.title }}</h3>
+        <TaskReminderButton :task-id="task.id" :task-title="task.title" />
+      </div>
       
       <div class="flex items-center justify-between gap-2">
         <div class="flex items-center gap-2 text-label-xs text-muted flex-wrap">
@@ -477,7 +480,9 @@ const dragStyle = computed(() => {
 
 function formatDate(dateStr: string | null): string {
   if (!dateStr) return ''
-  const date = new Date(dateStr)
+  // Parse a data como local, não UTC
+  const [year, month, day] = dateStr.split('T')[0].split('-')
+  const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day))
   return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
 }
 
