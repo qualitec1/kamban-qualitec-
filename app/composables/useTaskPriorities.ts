@@ -23,9 +23,6 @@ export function useTaskPriorities(boardId: string) {
   const cached = prioritiesCache.get(boardId)
   if (cached && (Date.now() - cached.timestamp) < CACHE_TTL && cached.data.length > 0) {
     priorities.value = cached.data
-  } else {
-    // Se não tem cache válido, carregar imediatamente
-    fetchPriorities()
   }
 
   async function fetchPriorities() {
