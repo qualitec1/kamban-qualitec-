@@ -164,7 +164,8 @@ serve(async (req) => {
             from: `${EMAIL_FROM_NAME} <${EMAIL_USER}>`,
             to: reminder.user.email,
             subject: `🔔 Lembrete: ${reminder.task.title}`,
-            html: emailHtml,
+            content: emailHtml,
+            mimeType: 'text/html; charset=utf-8',
           })
 
           await client.close()
