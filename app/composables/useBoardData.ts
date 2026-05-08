@@ -327,17 +327,40 @@ export function useBoardData(boardId: string) {
     cache.delete(boardId)
   }
 
-  // Escutar eventos de atualização de tarefas
+  // Configurar Supabase Realtime para sincronização automática
   if (import.meta.client) {
-    const handleTaskUpdate = () => {
-      invalidateCache()
-      fetchAll(false)
-    }
-    window.addEventListener('task-updated', handleTaskUpdate)
-    
-    // Cleanup
+    const channel = supabase
+      .channel(`board-${boardId}-tasks`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'tasks',
+          filter: `board_id=eq.${boardId}`
+        },
+        async (payload: any) => {
+          console.log('[useBoardData] Task updated via Realtime, refreshing data...')
+          
+          // Simplesmente recarregar os dados do banco
+          await loadFreshData(false)
+          
+          console.log('[useBoardData] Data refreshed, filters will re-apply automatically')
+        }
+      )
+      .subscribe((status) => {
+        console.log('[useBoardData] Realtime subscription status:', status)
+        if (status === 'SUBSCRIBED') {
+          console.log('[useBoardData] ✅ Realtime connected successfully')
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          console.error('[useBoardData] ❌ Realtime connection failed:', status)
+        }
+      })
+
+    // Cleanup ao desmontar
     onUnmounted(() => {
-      window.removeEventListener('task-updated', handleTaskUpdate)
+      console.log('[useBoardData] Unsubscribing from Realtime')
+      channel.unsubscribe()
     })
   }
 
@@ -365,6 +388,14 @@ export function useBoardData(boardId: string) {
     }
   }
 
+  /**
+   * Recarrega dados do banco (usar após mutações)
+   */
+  async function refresh() {
+    console.log('[useBoardData] Manual refresh triggered')
+    await loadFreshData(false)
+  }
+
   return {
     board,
     groups,
@@ -375,6 +406,7 @@ export function useBoardData(boardId: string) {
     error,
     fetchAll,
     invalidateCache,
-    refreshGroupTasks
+    refreshGroupTasks,
+    refresh
   }
 }

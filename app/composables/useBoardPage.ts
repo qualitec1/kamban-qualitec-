@@ -23,7 +23,8 @@ export function useBoardPage(boardId: string) {
     error,
     fetchAll,
     invalidateCache,
-    refreshGroupTasks
+    refreshGroupTasks,
+    refresh
   } = useBoardData(boardId)
 
   // Composables
@@ -80,11 +81,22 @@ export function useBoardPage(boardId: string) {
 
   // Aplicar filtros nas tarefas
   const filteredTasksByGroup = computed(() => {
-    if (!hasActiveFilters.value) return tasksByGroup.value
+    console.log('[useBoardPage] filteredTasksByGroup recomputing...', {
+      hasActiveFilters: hasActiveFilters.value,
+      tasksByGroupKeys: Object.keys(tasksByGroup.value)
+    })
+    
+    if (!hasActiveFilters.value) {
+      console.log('[useBoardPage] No active filters, returning all tasks')
+      return tasksByGroup.value
+    }
 
     const filtered: Record<string, any[]> = {}
     for (const groupId in tasksByGroup.value) {
-      filtered[groupId] = filterTasks(tasksByGroup.value[groupId] || [])
+      const tasks = tasksByGroup.value[groupId] || []
+      const filteredTasks = filterTasks(tasks)
+      filtered[groupId] = filteredTasks
+      console.log(`[useBoardPage] Group ${groupId}: ${tasks.length} tasks -> ${filteredTasks.length} after filter`)
     }
     return filtered
   })
@@ -371,6 +383,7 @@ export function useBoardPage(boardId: string) {
     fetchPriorities,
     fetchMembers,
     invalidateCache,
-    refreshGroupTasks
+    refreshGroupTasks,
+    refresh
   }
 }

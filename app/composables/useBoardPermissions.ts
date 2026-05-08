@@ -11,19 +11,20 @@ export function useBoardPermissions(boardId: string) {
     return useNuxtApp().$supabase as SupabaseClient
   }
 
+  const { isMaster } = useAuth()
   const userRole = ref<AccessRole | null>(null)
   const loading = ref(false)
 
   const canEdit = computed(() => {
-    return userRole.value === 'owner' || userRole.value === 'editor'
+    return isMaster.value || userRole.value === 'owner' || userRole.value === 'editor'
   })
 
   const canView = computed(() => {
-    return userRole.value !== null
+    return isMaster.value || userRole.value !== null
   })
 
   const isOwner = computed(() => {
-    return userRole.value === 'owner'
+    return isMaster.value || userRole.value === 'owner'
   })
 
   const isEditor = computed(() => {
@@ -39,6 +40,12 @@ export function useBoardPermissions(boardId: string) {
   })
 
   async function fetchUserRole() {
+    // Se é master, não precisa buscar role
+    if (isMaster.value) {
+      userRole.value = 'owner'
+      return
+    }
+    
     loading.value = true
     try {
       const supabase = getClient()

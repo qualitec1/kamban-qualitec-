@@ -199,7 +199,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useTaskPriorities } from '~/composables/useTaskPriorities'
 import { useBoardPermissions } from '~/composables/useBoardPermissions'
 import { getIconForPriority } from '~/utils/statusIcons'
@@ -212,8 +212,18 @@ const props = defineProps<{
 }>()
 const emit = defineEmits<{ (e: 'update:priorityId', value: string | null): void }>()
 
-const { priorities, loading, fetchPriorities, updateTaskPriority, createPriority, updatePriority, reorderPriorities } = useTaskPriorities(props.boardId)
+const { priorities, loading, fetchPriorities, createPriority, updatePriority, reorderPriorities } = useTaskPriorities(props.boardId)
 const { canEdit: canEditTasks, fetchUserRole } = useBoardPermissions(props.boardId)
+
+// Estado local para atualização otimista
+const optimisticPriorityId = ref<string | null>(props.priorityId)
+
+// Atualizar quando a prop mudar (sincronização com banco)
+watch(() => props.priorityId, (newValue) => {
+  optimisticPriorityId.value = newValue
+}, { immediate: true })
+
+const supabase = useNuxtApp().$supabase as any
 
 const open = ref(false)
 const rootRef = ref<HTMLElement | null>(null)
@@ -231,14 +241,14 @@ const draggedPriorityId = ref<string | null>(null)
 const priorityOrder = ref<string[]>([])
 
 const currentPriority = computed(() =>
-  props.priorityId ? priorities.value.find(p => p.id === props.priorityId) ?? null : null
+  optimisticPriorityId.value ? priorities.value.find(p => p.id === optimisticPriorityId.value) ?? null : null
 )
 
 const orderedPriorities = computed(() => {
   if (priorityOrder.value.length === 0) return priorities.value
   return priorityOrder.value
     .map(id => priorities.value.find(p => p.id === id))
-    .filter(Boolean) as any[]
+    .filter((p): p is NonNullable<typeof p> => p !== null && p !== undefined)
 })
 
 function calcPosition() {
@@ -298,7 +308,16 @@ function calcPosition() {
 }
 
 function toggleDropdown() {
-  if (!canEditTasks.value) return
+  console.log('[PriorityCell] toggleDropdown called', {
+    canEditTasks: canEditTasks.value,
+    open: open.value,
+    prioritiesCount: priorities.value.length
+  })
+  
+  if (!canEditTasks.value) {
+    console.log('[PriorityCell] Cannot edit tasks, returning')
+    return
+  }
   
   // Se está fechando e houve reordenação, salvar
   if (open.value && priorityOrder.value.length > 0) {
@@ -310,6 +329,8 @@ function toggleDropdown() {
   }
   
   open.value = !open.value
+  console.log('[PriorityCell] Dropdown toggled, new state:', open.value)
+  
   if (open.value) {
     priorityOrder.value = priorities.value.map(p => p.id)
     // Usar nextTick para garantir que o DOM foi atualizado
@@ -322,9 +343,13 @@ function toggleDropdown() {
 async function select(priorityId: string | null) {
   if (!canEditTasks.value) return
   open.value = false
-  if (priorityId === props.priorityId) return
+  if (priorityId === optimisticPriorityId.value) return
   
-  // Emit primeiro para atualização otimista
+  // Guardar valor anterior para rollback
+  const previousPriorityId = optimisticPriorityId.value
+  
+  // 1. Atualização otimista - UI instantânea
+  optimisticPriorityId.value = priorityId
   emit('update:priorityId', priorityId)
   
   // Se for subtask, não salvar aqui - deixar o componente pai fazer
@@ -332,10 +357,22 @@ async function select(priorityId: string | null) {
     return
   }
   
-  // Para tasks normais, salvar no banco
+  // 2. Salvar no banco em background
   try {
-    await updateTaskPriority(props.taskId, priorityId)
-  } catch { /* silently fail */ }
+    const { error } = await supabase
+      .from('tasks')
+      .update({ priority_id: priorityId })
+      .eq('id', props.taskId)
+    
+    if (error) throw error
+    
+    // 3. Supabase Realtime vai sincronizar automaticamente
+  } catch (error) {
+    // 4. Rollback em caso de erro
+    console.error('Erro ao atualizar prioridade:', error)
+    optimisticPriorityId.value = previousPriorityId
+    emit('update:priorityId', previousPriorityId)
+  }
 }
 
 function startEdit(priority: any) {

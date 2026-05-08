@@ -199,7 +199,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useTaskStatuses } from '~/composables/useTaskStatuses'
 import { useBoardPermissions } from '~/composables/useBoardPermissions'
 import { getIconForStatus } from '~/utils/statusIcons'
@@ -215,6 +215,20 @@ const emit = defineEmits<{ (e: 'update:statusId', value: string | null): void }>
 const { statuses, loading, fetchStatuses, updateTaskStatus, createStatus, updateStatus, reorderStatuses } = useTaskStatuses(props.boardId)
 const { canEdit: canEditTasks, fetchUserRole } = useBoardPermissions(props.boardId)
 
+const supabase = useNuxtApp().$supabase as any
+
+// Estado local para atualização otimista
+const optimisticStatusId = ref<string | null>(props.statusId)
+
+// Atualizar quando a prop mudar (sincronização com banco)
+watch(() => props.statusId, (newValue) => {
+  optimisticStatusId.value = newValue
+}, { immediate: true })
+
+const currentStatus = computed(() =>
+  optimisticStatusId.value ? statuses.value.find(s => s.id === optimisticStatusId.value) ?? null : null
+)
+
 const open = ref(false)
 const rootRef = ref<HTMLElement | null>(null)
 const dropdownRef = ref<HTMLElement | null>(null)
@@ -229,10 +243,6 @@ const newStatusName = ref('')
 const newStatusColor = ref('#3b82f6')
 const draggedStatusId = ref<string | null>(null)
 const statusOrder = ref<string[]>([])
-
-const currentStatus = computed(() =>
-  props.statusId ? statuses.value.find(s => s.id === props.statusId) ?? null : null
-)
 
 const orderedStatuses = computed(() => {
   if (statusOrder.value.length === 0) return statuses.value
@@ -298,7 +308,16 @@ function calcPosition() {
 }
 
 function toggleDropdown() {
-  if (!canEditTasks.value) return
+  console.log('[StatusCell] toggleDropdown called', {
+    canEditTasks: canEditTasks.value,
+    open: open.value,
+    statusesCount: statuses.value.length
+  })
+  
+  if (!canEditTasks.value) {
+    console.log('[StatusCell] Cannot edit tasks, returning')
+    return
+  }
   
   // Se está fechando e houve reordenação, salvar
   if (open.value && statusOrder.value.length > 0) {
@@ -310,6 +329,8 @@ function toggleDropdown() {
   }
   
   open.value = !open.value
+  console.log('[StatusCell] Dropdown toggled, new state:', open.value)
+  
   if (open.value) {
     statusOrder.value = statuses.value.map(s => s.id)
     // Usar nextTick para garantir que o DOM foi atualizado
@@ -320,22 +341,57 @@ function toggleDropdown() {
 }
 
 async function select(statusId: string | null) {
-  if (!canEditTasks.value) return
-  open.value = false
-  if (statusId === props.statusId) return
+  console.log('[StatusCell] select called', {
+    statusId,
+    canEditTasks: canEditTasks.value,
+    currentStatusId: optimisticStatusId.value,
+    taskId: props.taskId
+  })
   
-  // Emit primeiro para atualização otimista
+  if (!canEditTasks.value) {
+    console.log('[StatusCell] Cannot edit tasks, returning')
+    return
+  }
+  
+  open.value = false
+  
+  if (statusId === optimisticStatusId.value) {
+    console.log('[StatusCell] Same status, returning')
+    return
+  }
+  
+  // Guardar valor anterior para rollback
+  const previousStatusId = optimisticStatusId.value
+  
+  // 1. Atualização otimista - UI instantânea
+  console.log('[StatusCell] Updating optimistic state from', previousStatusId, 'to', statusId)
+  optimisticStatusId.value = statusId
   emit('update:statusId', statusId)
   
   // Se for subtask, não salvar aqui - deixar o componente pai fazer
   if (props.isSubtask) {
+    console.log('[StatusCell] Is subtask, not saving to DB')
     return
   }
   
-  // Para tasks normais, salvar no banco
+  // 2. Salvar no banco em background
   try {
-    await updateTaskStatus(props.taskId, statusId)
-  } catch { /* silently fail */ }
+    console.log('[StatusCell] Saving to database...')
+    const { error } = await supabase
+      .from('tasks')
+      .update({ status_id: statusId })
+      .eq('id', props.taskId)
+    
+    if (error) throw error
+    
+    console.log('[StatusCell] Saved successfully, Realtime will sync')
+    // 3. Supabase Realtime vai sincronizar automaticamente
+  } catch (error) {
+    // 4. Rollback em caso de erro
+    console.error('[StatusCell] Error saving to database:', error)
+    optimisticStatusId.value = previousStatusId
+    emit('update:statusId', previousStatusId)
+  }
 }
 
 function startEdit(status: any) {
@@ -427,12 +483,23 @@ function onClickOutside(e: MouseEvent) {
   open.value = false
 }
 
-onMounted(() => { 
+onMounted(() => {
+  console.log('[StatusCell] Component mounted', {
+    taskId: props.taskId,
+    boardId: props.boardId,
+    statusId: props.statusId
+  })
+  
   fetchStatuses()
   fetchUserRole()
   document.addEventListener('mousedown', onClickOutside)
   window.addEventListener('resize', () => {
     if (open.value) calcPosition()
+  })
+  
+  // Log canEditTasks após carregar role
+  nextTick(() => {
+    console.log('[StatusCell] canEditTasks after mount:', canEditTasks.value)
   })
 })
 onUnmounted(() => {

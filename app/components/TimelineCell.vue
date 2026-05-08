@@ -154,28 +154,30 @@ async function save() {
   open.value = false
   const s = draftStart.value || null
   const e = draftEnd.value || null
+  
   try {
     await supabase.from('tasks').update({ start_date: s, due_date: e }).eq('id', props.taskId)
-    emit('update:startDate', s)
-    emit('update:endDate', e)
     
-    // Forçar atualização do cache
-    window.dispatchEvent(new CustomEvent('task-updated', { detail: { taskId: props.taskId } }))
-  } catch { /* silently fail */ }
+    // Não emitir eventos - deixar o Realtime ou refresh manual fazer o trabalho
+    console.log('[TimelineCell] Dates saved successfully')
+  } catch (err) {
+    console.error('[TimelineCell] Error saving dates:', err)
+  }
 }
 
 async function clear() {
   draftStart.value = ''
   draftEnd.value = ''
   open.value = false
+  
   try {
     await supabase.from('tasks').update({ start_date: null, due_date: null }).eq('id', props.taskId)
-    emit('update:startDate', null)
-    emit('update:endDate', null)
     
-    // Forçar atualização do cache
-    window.dispatchEvent(new CustomEvent('task-updated', { detail: { taskId: props.taskId } }))
-  } catch { /* silently fail */ }
+    // Não emitir eventos - deixar o Realtime ou refresh manual fazer o trabalho
+    console.log('[TimelineCell] Dates cleared successfully')
+  } catch (err) {
+    console.error('[TimelineCell] Error clearing dates:', err)
+  }
 }
 
 function onClickOutside(e: MouseEvent) {

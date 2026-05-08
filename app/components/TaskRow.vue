@@ -307,8 +307,7 @@ function handleSubtaskUpdated() {
 }
 
 function onTaskUpdated(patch: { field: string; value: unknown }) {
-  // Como agora usamos computed que reflete as props diretamente,
-  // apenas emitimos o evento para que o componente pai atualize os dados
+  // Emitir evento para que o componente pai atualize os dados
   emit('taskUpdated', props.task.id)
 }
 
