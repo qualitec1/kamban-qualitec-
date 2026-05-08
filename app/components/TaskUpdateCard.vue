@@ -268,7 +268,8 @@ const {
   fetchReplies,
   addReply,
   deleteReply,
-  updateReply
+  updateReply,
+  initializeCounts
 } = useUpdateInteractions(props.update.id)
 
 const showMenu = ref(false)
@@ -285,7 +286,16 @@ const isAuthor = computed(() => {
 })
 
 onMounted(() => {
+  // Inicializar contadores com valores do update
+  initializeCounts(props.update.like_count || 0, props.update.reply_count || 0)
+  
   fetchLikes()
+  
+  // Carregar respostas automaticamente se houver comentários
+  if (props.update.reply_count && props.update.reply_count > 0) {
+    showReplies.value = true
+    fetchReplies()
+  }
 })
 
 function formatRelativeTime(dateString: string): string {

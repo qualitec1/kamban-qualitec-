@@ -216,6 +216,12 @@ export function useUpdateInteractions(updateId: string) {
     return data?.task_id
   }
 
+  // Inicializar contadores com valores do update
+  function initializeCounts(initialLikeCount: number, initialReplyCount: number) {
+    likeCount.value = initialLikeCount
+    replyCount.value = initialReplyCount
+  }
+
   return {
     likes,
     replies,
@@ -228,6 +234,7 @@ export function useUpdateInteractions(updateId: string) {
     fetchReplies,
     addReply,
     deleteReply,
-    updateReply
+    updateReply,
+    initializeCounts
   }
 }

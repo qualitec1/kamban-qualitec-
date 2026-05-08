@@ -7,14 +7,25 @@
       aria-label="Notificações"
       :aria-expanded="open"
     >
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+      <svg 
+        class="w-5 h-5 transition-transform duration-200" 
+        :class="{ 'animate-wiggle': hasNewNotification }"
+        fill="none" 
+        stroke="currentColor" 
+        stroke-width="2" 
+        viewBox="0 0 24 24" 
+        aria-hidden="true"
+      >
         <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
       </svg>
+      <!-- Badge com contador -->
       <span 
         v-if="unreadCount > 0" 
-        class="absolute top-1.5 right-1.5 w-2 h-2 bg-error-500 rounded-full" 
-        aria-hidden="true" 
-      />
+        class="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-error-500 text-white text-[10px] font-bold rounded-full animate-pulse-scale" 
+        aria-hidden="true"
+      >
+        {{ unreadCount > 9 ? '9+' : unreadCount }}
+      </span>
     </button>
 
     <!-- Painel de notificações -->
@@ -117,7 +128,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useNotifications } from '~/composables/useNotifications'
 
 const { 
@@ -134,6 +145,8 @@ const {
 const open = ref(false)
 const panelRef = ref<HTMLElement | null>(null)
 const panelStyle = ref<Record<string, string>>({})
+const hasNewNotification = ref(false)
+const previousUnreadCount = ref(0)
 
 function calcPosition() {
   if (!panelRef.value) return
@@ -181,8 +194,20 @@ let unsubscribe: (() => void) | null = null
 
 onMounted(async () => {
   await fetchNotifications()
+  previousUnreadCount.value = unreadCount.value
   unsubscribe = await subscribeToNotifications()
   document.addEventListener('mousedown', onClickOutside)
+  
+  // Watch para detectar novas notificações
+  watch(unreadCount, (newCount, oldCount) => {
+    if (newCount > oldCount) {
+      hasNewNotification.value = true
+      // Remover animação após 3 segundos
+      setTimeout(() => {
+        hasNewNotification.value = false
+      }, 3000)
+    }
+  })
 })
 
 onUnmounted(() => {
@@ -200,5 +225,32 @@ onUnmounted(() => {
 .dropdown-leave-to {
   opacity: 0;
   transform: translateY(-4px);
+}
+
+/* Animação de balanço (wiggle) para o ícone */
+@keyframes wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  10%, 30%, 50%, 70%, 90% { transform: rotate(-10deg); }
+  20%, 40%, 60%, 80% { transform: rotate(10deg); }
+}
+
+.animate-wiggle {
+  animation: wiggle 0.8s ease-in-out;
+}
+
+/* Animação de pulso para o badge */
+@keyframes pulse-scale {
+  0%, 100% { 
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% { 
+    transform: scale(1.1);
+    opacity: 0.9;
+  }
+}
+
+.animate-pulse-scale {
+  animation: pulse-scale 2s ease-in-out infinite;
 }
 </style>
