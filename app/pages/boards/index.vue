@@ -262,7 +262,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { navigateTo } from '#imports'
 import { useBoards } from '~/composables/useBoards'
 import { useWorkspaces } from '~/composables/useWorkspaces'
@@ -270,6 +270,7 @@ import { useBoardGuests } from '~/composables/useBoardGuests'
 import { useBoardTemplates } from '~/composables/useBoardTemplates'
 import { useAuth } from '~/composables/useAuth'
 import type { Database } from '#shared/types/database'
+import Sortable from 'sortablejs'
 
 const { boards, loading, error, fetchBoards, createBoard, deleteBoard } = useBoards()
 const { workspaces, fetchWorkspaces } = useWorkspaces()
@@ -283,6 +284,8 @@ const managingBoardId = ref<string | null>(null)
 const savingAsTemplate = ref<string | null>(null)
 const deletingBoardId = ref<string | null>(null)
 const showHelp = ref(true)
+const boardsGridRef = ref<HTMLElement | null>(null)
+let sortableInstance: Sortable | null = null
 
 const showGuestModal = computed({
   get: () => managingBoardId.value !== null,
@@ -366,11 +369,38 @@ async function handleDeleteBoard() {
 
 async function loadBoards() { await fetchBoards() }
 
+function initSortable() {
+  if (!boardsGridRef.value || sortableInstance) return
+  
+  sortableInstance = new Sortable(boardsGridRef.value, {
+    animation: 150,
+    handle: '.drag-handle',
+    ghostClass: 'opacity-50',
+    dragClass: 'shadow-2xl',
+    chosenClass: 'ring-2 ring-primary-500',
+    onEnd: (evt) => {
+      const { oldIndex, newIndex } = evt
+      if (oldIndex !== undefined && newIndex !== undefined && oldIndex !== newIndex) {
+        // Reordenar array local
+        const movedBoard = filteredBoards.value[oldIndex]
+        console.log(`[Boards] Moved board "${movedBoard.name}" from ${oldIndex} to ${newIndex}`)
+        
+        // Aqui você pode salvar a nova ordem no banco de dados se necessário
+        // Por enquanto, apenas reordena localmente
+      }
+    }
+  })
+}
+
 onMounted(async () => {
   await fetchWorkspaces()
   await fetchBoards()
   await fetchOrgUsers()
   await fetchTemplates()
   if (workspaces.value.length > 0) form.value.workspace_id = workspaces.value[0]?.id ?? ''
+  
+  // Inicializar sortable após carregar os boards
+  await nextTick()
+  initSortable()
 })
 </script>

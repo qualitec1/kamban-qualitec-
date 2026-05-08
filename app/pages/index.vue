@@ -11,16 +11,16 @@
       </div>
 
       <!-- Stats Cards -->
-      <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-7 gap-4 mb-8">
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4 mb-8">
         <!-- Total -->
-        <div class="bg-white rounded-xl p-6 shadow-sm border border-neutral-200">
+        <div class="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-neutral-200 transition-all duration-300 hover:scale-110 hover:shadow-xl hover:z-10 relative group">
           <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm text-neutral-500 mb-1">Total</p>
-              <p class="text-2xl font-bold text-neutral-900">{{ filteredTasks.length }}</p>
+            <div class="min-w-0 flex-1">
+              <p class="text-xs sm:text-sm text-neutral-500 mb-1 truncate group-hover:whitespace-nowrap">Total</p>
+              <p class="text-xl sm:text-2xl font-bold text-neutral-900">{{ filteredTasks.length }}</p>
             </div>
-            <div class="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center">
-              <svg class="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="w-10 h-10 sm:w-12 sm:h-12 bg-primary-100 rounded-lg flex items-center justify-center flex-shrink-0 ml-2">
+              <svg class="w-5 h-5 sm:w-6 sm:h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
             </div>
@@ -28,14 +28,14 @@
         </div>
 
         <!-- Orçamento Total -->
-        <div class="bg-white rounded-xl p-6 shadow-sm border border-neutral-200">
+        <div class="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-neutral-200 transition-all duration-300 hover:scale-110 hover:shadow-xl hover:z-10 relative group hover:w-auto hover:min-w-max">
           <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm text-neutral-500 mb-1">Orçamento Total</p>
-              <p class="text-2xl font-bold text-green-600">{{ formatCurrency(totalBudget) }}</p>
+            <div class="min-w-0 flex-1">
+              <p class="text-xs sm:text-sm text-neutral-500 mb-1 truncate group-hover:whitespace-nowrap">Orçamento Total</p>
+              <p class="text-lg sm:text-2xl font-bold text-green-600 truncate group-hover:whitespace-nowrap">{{ formatCurrency(totalBudget) }}</p>
             </div>
-            <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-              <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0 ml-2">
+              <svg class="w-5 h-5 sm:w-6 sm:h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
@@ -43,14 +43,14 @@
         </div>
 
         <!-- Críticas -->
-        <div class="bg-white rounded-xl p-6 shadow-sm border border-neutral-200">
+        <div class="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-neutral-200 transition-all duration-300 hover:scale-110 hover:shadow-xl hover:z-10 relative group">
           <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm text-neutral-500 mb-1">Críticas</p>
-              <p class="text-2xl font-bold text-red-600">{{ criticalCount }}</p>
+            <div class="min-w-0 flex-1">
+              <p class="text-xs sm:text-sm text-neutral-500 mb-1 truncate group-hover:whitespace-nowrap">Críticas</p>
+              <p class="text-xl sm:text-2xl font-bold text-red-600">{{ criticalCount }}</p>
             </div>
-            <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
-              <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="w-10 h-10 sm:w-12 sm:h-12 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0 ml-2">
+              <svg class="w-5 h-5 sm:w-6 sm:h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
             </div>
@@ -58,14 +58,14 @@
         </div>
 
         <!-- Prioridades Altas -->
-        <div class="bg-white rounded-xl p-6 shadow-sm border border-neutral-200">
+        <div class="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-neutral-200 transition-all duration-300 hover:scale-110 hover:shadow-xl hover:z-10 relative group">
           <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm text-neutral-500 mb-1">Prioridade Alta</p>
-              <p class="text-2xl font-bold text-orange-600">{{ highPriorityCount }}</p>
+            <div class="min-w-0 flex-1">
+              <p class="text-xs sm:text-sm text-neutral-500 mb-1 truncate group-hover:whitespace-nowrap">Prioridade Alta</p>
+              <p class="text-xl sm:text-2xl font-bold text-orange-600">{{ highPriorityCount }}</p>
             </div>
-            <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-              <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="w-10 h-10 sm:w-12 sm:h-12 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0 ml-2">
+              <svg class="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             </div>
@@ -73,14 +73,14 @@
         </div>
 
         <!-- Vencendo Hoje -->
-        <div class="bg-white rounded-xl p-6 shadow-sm border border-neutral-200">
+        <div class="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-neutral-200 transition-all duration-300 hover:scale-110 hover:shadow-xl hover:z-10 relative group">
           <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm text-neutral-500 mb-1">Vencendo Hoje</p>
-              <p class="text-2xl font-bold text-orange-600">{{ dueTodayCount }}</p>
+            <div class="min-w-0 flex-1">
+              <p class="text-xs sm:text-sm text-neutral-500 mb-1 truncate group-hover:whitespace-nowrap">Vencendo Hoje</p>
+              <p class="text-xl sm:text-2xl font-bold text-orange-600">{{ dueTodayCount }}</p>
             </div>
-            <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-              <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="w-10 h-10 sm:w-12 sm:h-12 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0 ml-2">
+              <svg class="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
@@ -88,14 +88,14 @@
         </div>
 
         <!-- Atrasadas -->
-        <div class="bg-white rounded-xl p-6 shadow-sm border border-neutral-200">
+        <div class="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-neutral-200 transition-all duration-300 hover:scale-110 hover:shadow-xl hover:z-10 relative group">
           <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm text-neutral-500 mb-1">Atrasadas</p>
-              <p class="text-2xl font-bold text-red-600">{{ overdueCount }}</p>
+            <div class="min-w-0 flex-1">
+              <p class="text-xs sm:text-sm text-neutral-500 mb-1 truncate group-hover:whitespace-nowrap">Atrasadas</p>
+              <p class="text-xl sm:text-2xl font-bold text-red-600">{{ overdueCount }}</p>
             </div>
-            <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
-              <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="w-10 h-10 sm:w-12 sm:h-12 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0 ml-2">
+              <svg class="w-5 h-5 sm:w-6 sm:h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
@@ -103,29 +103,29 @@
         </div>
 
         <!-- Próxima a Vencer -->
-        <div class="bg-white rounded-xl p-6 shadow-sm border border-neutral-200">
+        <div class="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-neutral-200 transition-all duration-300 hover:scale-110 hover:shadow-xl hover:z-10 relative group hover:w-auto hover:min-w-max">
           <div class="flex flex-col">
-            <p class="text-sm text-neutral-500 mb-2">Próxima a Vencer</p>
-            <div v-if="nextDueTask" class="flex items-center gap-2 mb-2">
-              <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <p class="text-xs sm:text-sm text-neutral-500 mb-2 truncate group-hover:whitespace-nowrap">Próxima a Vencer</p>
+            <div v-if="nextDueTask" class="flex items-center gap-2">
+              <div class="w-8 h-8 sm:w-10 sm:h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <svg class="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
               </div>
               <div class="flex-1 min-w-0">
-                <p class="text-lg font-bold text-blue-600">{{ formatDate(nextDueTask.due_date!) }}</p>
-                <p class="text-xs text-neutral-500 truncate">{{ nextDueTask.title }}</p>
+                <p class="text-base sm:text-lg font-bold text-blue-600 truncate group-hover:whitespace-nowrap">{{ formatDate(nextDueTask.due_date!) }}</p>
+                <p class="text-xs text-neutral-500 truncate group-hover:whitespace-nowrap">{{ nextDueTask.title }}</p>
               </div>
             </div>
             <div v-else class="flex items-center gap-2">
-              <div class="w-10 h-10 bg-neutral-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <svg class="w-5 h-5 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div class="w-8 h-8 sm:w-10 sm:h-10 bg-neutral-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <svg class="w-4 h-4 sm:w-5 sm:h-5 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
               </div>
-              <div class="flex-1">
-                <p class="text-lg font-medium text-neutral-400">Sem prazo</p>
-                <p class="text-xs text-neutral-400">Nenhuma tarefa com data</p>
+              <div class="flex-1 min-w-0 group-hover:min-w-full">
+                <p class="text-base sm:text-lg font-medium text-neutral-400 truncate group-hover:whitespace-normal group-hover:overflow-visible">Sem prazo</p>
+                <p class="text-xs text-neutral-400 truncate group-hover:whitespace-normal group-hover:overflow-visible">Nenhuma tarefa com data</p>
               </div>
             </div>
           </div>
@@ -480,19 +480,29 @@ function isDueToday(dateStr: string): boolean {
 
 onMounted(async () => {
   if (user.value) {
-    await fetchMyTasks()
-    
-    // Debug: verificar próxima tarefa
-    console.log('[MyTasks] Total tasks:', tasks.value.length)
-    console.log('[MyTasks] Filtered tasks:', filteredTasks.value.length)
-    console.log('[MyTasks] Next due task:', nextDueTask.value)
-    
-    // Debug: listar todas as tarefas com data
-    const tasksWithDate = filteredTasks.value.filter(t => t.due_date)
-    console.log('[MyTasks] Tasks with due date:', tasksWithDate.map(t => ({
-      title: t.title,
-      due_date: t.due_date
-    })))
+    try {
+      await Promise.race([
+        fetchMyTasks(),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout ao carregar tarefas')), 10000)
+        )
+      ])
+      
+      // Debug: verificar próxima tarefa
+      console.log('[MyTasks] Total tasks:', tasks.value.length)
+      console.log('[MyTasks] Filtered tasks:', filteredTasks.value.length)
+      console.log('[MyTasks] Next due task:', nextDueTask.value)
+      
+      // Debug: listar todas as tarefas com data
+      const tasksWithDate = filteredTasks.value.filter(t => t.due_date)
+      console.log('[MyTasks] Tasks with due date:', tasksWithDate.map(t => ({
+        title: t.title,
+        due_date: t.due_date
+      })))
+    } catch (error) {
+      console.error('[MyTasks] Error loading tasks:', error)
+      alert('Erro ao carregar tarefas. Recarregue a página.')
+    }
   }
 })
 </script>

@@ -1,5 +1,6 @@
 import { ref } from '#imports'
 import type { Tables } from '#shared/types/database'
+import { useAuth } from '~/composables/useAuth'
 
 export type TaskRow = Pick<
   Tables<'tasks'>,
@@ -9,6 +10,7 @@ export type TaskRow = Pick<
 
 export function useTasks() {
   const supabase = useNuxtApp().$supabase as any
+  const { user } = useAuth()
 
   async function createTask(params: {
     boardId: string
@@ -32,6 +34,7 @@ export function useTasks() {
         board_id: params.boardId,
         group_id: params.groupId,
         position,
+        created_by: user.value?.id, // Adicionar o criador da tarefa
       })
       .select('id, title, group_id, board_id, status_id, priority_id, due_date, start_date, description, budget, updated_at')
       .single()
