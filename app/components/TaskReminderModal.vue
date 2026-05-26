@@ -286,35 +286,21 @@ async function handleSave() {
 
     if (!config.value.enabled) {
       // Desativar: remove apenas o lembrete do usuário atual
-      await supabase
+      const { error } = await supabase
         .from('task_reminders')
         .delete()
         .eq('task_id', props.taskId)
         .eq('user_id', user.value.id)
+
+      if (error) throw error
     } else {
-      // Determinar quais usuários receberão o lembrete
-      const targetUserIds = config.value.notifyAllAssignees && assignees.value.length > 0
-        ? assignees.value.map(a => a.id)
-        : [user.value.id]
-
-      // Garantir que o usuário atual sempre está incluído
-      if (!targetUserIds.includes(user.value.id)) {
-        targetUserIds.push(user.value.id)
-      }
-
-      // Upsert para cada usuário alvo
-      const upsertRows = targetUserIds.map(uid => ({
-        task_id: props.taskId,
-        user_id: uid,
-        enabled: true,
-        reminder_time: config.value.reminderTime + ':00',
-        days_before: config.value.daysBefore,
-        notify_all_assignees: config.value.notifyAllAssignees
-      }))
-
-      const { error } = await supabase
-        .from('task_reminders')
-        .upsert(upsertRows, { onConflict: 'task_id,user_id' })
+      // Usar RPC com SECURITY DEFINER para criar lembretes para outros responsáveis
+      const { error } = await supabase.rpc('upsert_reminders_for_assignees', {
+        p_task_id:       props.taskId,
+        p_days_before:   config.value.daysBefore,
+        p_reminder_time: config.value.reminderTime + ':00',
+        p_notify_all:    config.value.notifyAllAssignees
+      })
 
       if (error) throw error
     }
