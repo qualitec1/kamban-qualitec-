@@ -12,124 +12,87 @@
 
       <!-- Stats Cards -->
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4 mb-8">
+
         <!-- Total -->
-        <div class="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-neutral-200 transition-all duration-300 hover:scale-110 hover:shadow-xl hover:z-10 relative group">
-          <div class="flex items-center justify-between">
-            <div class="min-w-0 flex-1">
-              <p class="text-xs sm:text-sm text-neutral-500 mb-1 truncate group-hover:whitespace-nowrap">Total</p>
-              <p class="text-xl sm:text-2xl font-bold text-neutral-900">{{ filteredTasks.length }}</p>
-            </div>
-            <div class="w-10 h-10 sm:w-12 sm:h-12 bg-primary-100 rounded-lg flex items-center justify-center flex-shrink-0 ml-2">
-              <svg class="w-5 h-5 sm:w-6 sm:h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
-            </div>
-          </div>
-        </div>
+        <StatCard label="Total" :value="filteredTasks.length" icon-bg="bg-primary-100">
+          <template #icon>
+            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+          </template>
+        </StatCard>
 
         <!-- Orçamento Total -->
-        <div class="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-neutral-200 transition-all duration-300 hover:scale-110 hover:shadow-xl hover:z-10 relative group hover:w-auto hover:min-w-max">
-          <div class="flex items-center justify-between">
-            <div class="min-w-0 flex-1">
-              <p class="text-xs sm:text-sm text-neutral-500 mb-1 truncate group-hover:whitespace-nowrap">Orçamento Total</p>
-              <p class="text-lg sm:text-2xl font-bold text-green-600 truncate group-hover:whitespace-nowrap">{{ formatCurrency(totalBudget) }}</p>
-            </div>
-            <div class="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0 ml-2">
-              <svg class="w-5 h-5 sm:w-6 sm:h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-          </div>
-        </div>
+        <StatCard label="Orçamento Total" :value="formatCurrency(totalBudget)" value-color="text-green-600" value-size="text-lg sm:text-2xl" icon-bg="bg-green-100">
+          <template #icon>
+            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </template>
+        </StatCard>
 
         <!-- Críticas -->
-        <div class="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-neutral-200 transition-all duration-300 hover:scale-110 hover:shadow-xl hover:z-10 relative group">
-          <div class="flex items-center justify-between">
-            <div class="min-w-0 flex-1">
-              <p class="text-xs sm:text-sm text-neutral-500 mb-1 truncate group-hover:whitespace-nowrap">Críticas</p>
-              <p class="text-xl sm:text-2xl font-bold text-red-600">{{ criticalCount }}</p>
-            </div>
-            <div class="w-10 h-10 sm:w-12 sm:h-12 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0 ml-2">
-              <svg class="w-5 h-5 sm:w-6 sm:h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-            </div>
-          </div>
-        </div>
+        <StatCard label="Críticas" :value="criticalCount" value-color="text-red-600" icon-bg="bg-red-100">
+          <template #icon>
+            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </template>
+        </StatCard>
 
-        <!-- Prioridades Altas -->
-        <div class="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-neutral-200 transition-all duration-300 hover:scale-110 hover:shadow-xl hover:z-10 relative group">
-          <div class="flex items-center justify-between">
-            <div class="min-w-0 flex-1">
-              <p class="text-xs sm:text-sm text-neutral-500 mb-1 truncate group-hover:whitespace-nowrap">Prioridade Alta</p>
-              <p class="text-xl sm:text-2xl font-bold text-orange-600">{{ highPriorityCount }}</p>
-            </div>
-            <div class="w-10 h-10 sm:w-12 sm:h-12 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0 ml-2">
-              <svg class="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-            </div>
-          </div>
-        </div>
+        <!-- Prioridade Alta -->
+        <StatCard label="Prioridade Alta" :value="highPriorityCount" value-color="text-orange-600" icon-bg="bg-orange-100">
+          <template #icon>
+            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          </template>
+        </StatCard>
 
         <!-- Vencendo Hoje -->
-        <div class="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-neutral-200 transition-all duration-300 hover:scale-110 hover:shadow-xl hover:z-10 relative group">
-          <div class="flex items-center justify-between">
-            <div class="min-w-0 flex-1">
-              <p class="text-xs sm:text-sm text-neutral-500 mb-1 truncate group-hover:whitespace-nowrap">Vencendo Hoje</p>
-              <p class="text-xl sm:text-2xl font-bold text-orange-600">{{ dueTodayCount }}</p>
-            </div>
-            <div class="w-10 h-10 sm:w-12 sm:h-12 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0 ml-2">
-              <svg class="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-          </div>
-        </div>
+        <StatCard label="Vencendo Hoje" :value="dueTodayCount" value-color="text-orange-600" icon-bg="bg-orange-100">
+          <template #icon>
+            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </template>
+        </StatCard>
 
         <!-- Atrasadas -->
-        <div class="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-neutral-200 transition-all duration-300 hover:scale-110 hover:shadow-xl hover:z-10 relative group">
-          <div class="flex items-center justify-between">
-            <div class="min-w-0 flex-1">
-              <p class="text-xs sm:text-sm text-neutral-500 mb-1 truncate group-hover:whitespace-nowrap">Atrasadas</p>
-              <p class="text-xl sm:text-2xl font-bold text-red-600">{{ overdueCount }}</p>
-            </div>
-            <div class="w-10 h-10 sm:w-12 sm:h-12 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0 ml-2">
-              <svg class="w-5 h-5 sm:w-6 sm:h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-          </div>
-        </div>
+        <StatCard label="Atrasadas" :value="overdueCount" value-color="text-red-600" icon-bg="bg-red-100">
+          <template #icon>
+            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </template>
+        </StatCard>
 
         <!-- Próxima a Vencer -->
-        <div class="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-neutral-200 transition-all duration-300 hover:scale-110 hover:shadow-xl hover:z-10 relative group hover:w-auto hover:min-w-max">
-          <div class="flex flex-col">
-            <p class="text-xs sm:text-sm text-neutral-500 mb-2 truncate group-hover:whitespace-nowrap">Próxima a Vencer</p>
-            <div v-if="nextDueTask" class="flex items-center gap-2">
-              <div class="w-8 h-8 sm:w-10 sm:h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <svg class="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-              </div>
-              <div class="flex-1 min-w-0">
-                <p class="text-base sm:text-lg font-bold text-blue-600 truncate group-hover:whitespace-nowrap">{{ formatDate(nextDueTask.due_date!) }}</p>
-                <p class="text-xs text-neutral-500 truncate group-hover:whitespace-nowrap">{{ nextDueTask.title }}</p>
-              </div>
+        <StatCard label="Próxima a Vencer" layout="vertical">
+          <div v-if="nextDueTask" class="flex items-center gap-2">
+            <div class="w-8 h-8 sm:w-10 sm:h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <svg class="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
             </div>
-            <div v-else class="flex items-center gap-2">
-              <div class="w-8 h-8 sm:w-10 sm:h-10 bg-neutral-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <svg class="w-4 h-4 sm:w-5 sm:h-5 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-              </div>
-              <div class="flex-1 min-w-0 group-hover:min-w-full">
-                <p class="text-base sm:text-lg font-medium text-neutral-400 truncate group-hover:whitespace-normal group-hover:overflow-visible">Sem prazo</p>
-                <p class="text-xs text-neutral-400 truncate group-hover:whitespace-normal group-hover:overflow-visible">Nenhuma tarefa com data</p>
-              </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-base sm:text-lg font-bold text-blue-600 truncate group-hover:whitespace-nowrap">{{ formatDate(nextDueTask.due_date!) }}</p>
+              <p class="text-xs text-neutral-500 truncate group-hover:whitespace-nowrap">{{ nextDueTask.title }}</p>
             </div>
           </div>
-        </div>
+          <div v-else class="flex items-center gap-2">
+            <div class="w-8 h-8 sm:w-10 sm:h-10 bg-neutral-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <svg class="w-4 h-4 sm:w-5 sm:h-5 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-base sm:text-lg font-medium text-neutral-400 truncate group-hover:whitespace-nowrap">Sem prazo</p>
+              <p class="text-xs text-neutral-400 truncate group-hover:whitespace-nowrap">Nenhuma tarefa com data</p>
+            </div>
+          </div>
+        </StatCard>
+
       </div>
 
       <!-- Tasks Table -->

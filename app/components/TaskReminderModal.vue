@@ -9,7 +9,7 @@
         </div>
         <div>
           <h3 class="text-lg font-semibold text-neutral-900">Configurar Lembrete</h3>
-          <p class="text-sm text-neutral-600">{{ taskTitle }}</p>
+          <p class="text-sm text-neutral-600 truncate max-w-[200px]">{{ taskTitle }}</p>
         </div>
       </div>
     </template>
@@ -18,19 +18,15 @@
       <div class="w-8 h-8 border-4 border-neutral-200 border-t-primary-600 rounded-full animate-spin"></div>
     </div>
 
-    <div v-else class="space-y-6">
+    <div v-else class="space-y-5">
       <!-- Ativar/Desativar -->
       <div class="flex items-center justify-between p-4 bg-neutral-50 rounded-xl">
         <div class="flex-1">
           <h4 class="font-medium text-neutral-900">Ativar lembrete</h4>
-          <p class="text-sm text-neutral-600 mt-0.5">Receba um email antes do prazo</p>
+          <p class="text-sm text-neutral-500 mt-0.5">Receba um email antes do prazo</p>
         </div>
         <label class="relative inline-flex items-center cursor-pointer">
-          <input 
-            type="checkbox" 
-            v-model="config.enabled"
-            class="sr-only peer"
-          />
+          <input type="checkbox" v-model="config.enabled" class="sr-only peer" />
           <div class="w-14 h-7 bg-neutral-300 rounded-full peer-checked:bg-primary-600 transition-colors"></div>
           <div class="absolute left-1 top-1 w-5 h-5 bg-white rounded-full transition-transform peer-checked:translate-x-7 shadow-sm"></div>
         </label>
@@ -40,7 +36,7 @@
         <!-- Dias antes -->
         <div>
           <label class="block text-sm font-medium text-neutral-700 mb-2">Avisar com antecedência</label>
-          <select 
+          <select
             v-model.number="config.daysBefore"
             class="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
           >
@@ -55,12 +51,69 @@
         <!-- Horário -->
         <div>
           <label class="block text-sm font-medium text-neutral-700 mb-2">Horário do lembrete</label>
-          <input 
-            type="time" 
+          <input
+            type="time"
             v-model="config.reminderTime"
             class="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
           />
-          <p class="mt-1.5 text-xs text-neutral-500">Horário em que você receberá o email</p>
+        </div>
+
+        <!-- Notificar todos os responsáveis -->
+        <div class="border border-neutral-200 rounded-xl overflow-hidden">
+          <div class="flex items-start justify-between p-4">
+            <div class="flex-1 pr-4">
+              <h4 class="font-medium text-neutral-900 flex items-center gap-2">
+                <svg class="w-4 h-4 text-neutral-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                Notificar todos os responsáveis
+              </h4>
+              <p class="text-sm text-neutral-500 mt-1">
+                Aplica este lembrete para todos os membros atribuídos a esta tarefa
+              </p>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer shrink-0 mt-0.5">
+              <input type="checkbox" v-model="config.notifyAllAssignees" class="sr-only peer" />
+              <div class="w-14 h-7 bg-neutral-300 rounded-full peer-checked:bg-primary-600 transition-colors"></div>
+              <div class="absolute left-1 top-1 w-5 h-5 bg-white rounded-full transition-transform peer-checked:translate-x-7 shadow-sm"></div>
+            </label>
+          </div>
+
+          <!-- Lista de responsáveis (quando ativado) -->
+          <div v-if="config.notifyAllAssignees && assignees.length > 0" class="border-t border-neutral-100 bg-neutral-50 px-4 py-3">
+            <p class="text-xs font-medium text-neutral-500 mb-2 uppercase tracking-wide">Responsáveis que receberão o aviso</p>
+            <div class="space-y-2">
+              <div
+                v-for="assignee in assignees"
+                :key="assignee.id"
+                class="flex items-center gap-2.5"
+              >
+                <!-- Avatar -->
+                <div
+                  v-if="assignee.avatar_url"
+                  class="w-7 h-7 rounded-full bg-cover bg-center border border-white shadow-sm shrink-0"
+                  :style="{ backgroundImage: `url(${assignee.avatar_url})` }"
+                ></div>
+                <div
+                  v-else
+                  class="w-7 h-7 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white text-xs font-semibold shrink-0"
+                >
+                  {{ getInitials(assignee.full_name) }}
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-medium text-neutral-800 truncate">{{ assignee.full_name }}</p>
+                  <p class="text-xs text-neutral-400 truncate">{{ assignee.email }}</p>
+                </div>
+                <!-- Badge "você" -->
+                <span v-if="assignee.id === currentUserId" class="text-xs text-primary-600 bg-primary-50 px-2 py-0.5 rounded-full shrink-0">você</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sem responsáveis -->
+          <div v-else-if="config.notifyAllAssignees && assignees.length === 0" class="border-t border-neutral-100 bg-neutral-50 px-4 py-3">
+            <p class="text-sm text-neutral-400 text-center">Nenhum responsável atribuído a esta tarefa</p>
+          </div>
         </div>
 
         <!-- Preview -->
@@ -72,7 +125,12 @@
             <div class="text-sm text-blue-900">
               <p class="font-medium mb-1">Resumo</p>
               <p class="text-blue-700">
-                Você receberá um email <strong>{{ daysBeforeText }}</strong> às <strong>{{ config.reminderTime }}</strong>
+                <template v-if="config.notifyAllAssignees && assignees.length > 1">
+                  <strong>{{ assignees.length }} responsáveis</strong> receberão um email <strong>{{ daysBeforeText }}</strong> às <strong>{{ config.reminderTime }}</strong>
+                </template>
+                <template v-else>
+                  Você receberá um email <strong>{{ daysBeforeText }}</strong> às <strong>{{ config.reminderTime }}</strong>
+                </template>
               </p>
             </div>
           </div>
@@ -124,55 +182,74 @@ const { user } = useAuth()
 const loading = ref(true)
 const saving = ref(false)
 
-// v-model local para o BaseModal
+const currentUserId = computed(() => user.value?.id ?? '')
+
 const isOpen = computed({
   get: () => props.show,
-  set: (value) => {
-    if (!value) {
-      emit('close')
-    }
-  }
+  set: (value) => { if (!value) emit('close') }
 })
 
 const config = ref({
   enabled: false,
   reminderTime: '09:00',
-  daysBefore: 1
+  daysBefore: 1,
+  notifyAllAssignees: false
 })
 
-console.log('[TaskReminderModal] Componente criado para task:', props.taskId)
-
-// Watch para debug
-watch(() => props.show, (newVal) => {
-  console.log('[TaskReminderModal] prop show mudou para:', newVal)
-  if (newVal) {
-    console.log('[TaskReminderModal] Modal deve estar visível agora')
-    loadConfig()
-  }
-})
+// Lista de responsáveis da tarefa
+interface Assignee {
+  id: string
+  full_name: string
+  email: string
+  avatar_url: string | null
+}
+const assignees = ref<Assignee[]>([])
 
 const daysBeforeText = computed(() => {
-  const days = config.value.daysBefore
-  if (days === 0) return 'no dia do prazo'
-  if (days === 1) return '1 dia antes do prazo'
-  if (days === 7) return '1 semana antes do prazo'
-  return `${days} dias antes do prazo`
+  const d = config.value.daysBefore
+  if (d === 0) return 'no dia do prazo'
+  if (d === 1) return '1 dia antes do prazo'
+  if (d === 7) return '1 semana antes do prazo'
+  return `${d} dias antes do prazo`
+})
+
+watch(() => props.show, (newVal) => {
+  if (newVal) {
+    loadConfig()
+    loadAssignees()
+  }
 })
 
 onMounted(async () => {
-  console.log('[TaskReminderModal] onMounted - carregando configuração')
-  await loadConfig()
+  await Promise.all([loadConfig(), loadAssignees()])
   loading.value = false
 })
 
-async function loadConfig() {
-  if (!user.value) {
-    console.log('[TaskReminderModal] loadConfig - usuário não autenticado')
-    return
+async function loadAssignees() {
+  try {
+    const { $supabase } = useNuxtApp()
+    const supabase = $supabase as any
+
+    const { data, error } = await supabase
+      .from('task_assignees')
+      .select('profiles:user_id(id, full_name, email, avatar_url)')
+      .eq('task_id', props.taskId)
+
+    if (error) throw error
+
+    assignees.value = (data ?? [])
+      .map((row: any) => row.profiles)
+      .filter(Boolean) as Assignee[]
+  } catch (err) {
+    console.error('[TaskReminderModal] loadAssignees error:', err)
+    assignees.value = []
   }
+}
+
+async function loadConfig() {
+  if (!user.value) return
 
   try {
-    console.log('[TaskReminderModal] loadConfig - buscando configuração existente')
     const { $supabase } = useNuxtApp()
     const supabase = $supabase as any
 
@@ -183,81 +260,79 @@ async function loadConfig() {
       .eq('user_id', user.value.id)
       .maybeSingle()
 
-    if (error) {
-      console.error('[TaskReminderModal] loadConfig - erro:', error)
-      return
-    }
-
-    console.log('[TaskReminderModal] loadConfig - resultado:', data)
+    if (error) throw error
 
     if (data) {
       config.value = {
         enabled: data.enabled,
-        reminderTime: data.reminder_time.substring(0, 5), // HH:MM
-        daysBefore: data.days_before
+        reminderTime: data.reminder_time.substring(0, 5),
+        daysBefore: data.days_before,
+        notifyAllAssignees: data.notify_all_assignees ?? false
       }
     }
   } catch (err) {
-    console.error('[TaskReminderModal] loadConfig - exceção:', err)
+    console.error('[TaskReminderModal] loadConfig error:', err)
   }
 }
 
 async function handleSave() {
-  if (!user.value) {
-    console.log('[TaskReminderModal] handleSave - usuário não autenticado')
-    alert('Você precisa estar logado')
-    return
-  }
+  if (!user.value) { alert('Você precisa estar logado'); return }
 
   saving.value = true
-  console.log('[TaskReminderModal] handleSave - salvando configuração:', config.value)
 
   try {
     const { $supabase } = useNuxtApp()
     const supabase = $supabase as any
 
     if (!config.value.enabled) {
-      // Deletar lembrete
-      console.log('[TaskReminderModal] handleSave - deletando lembrete')
-      const { error } = await supabase
+      // Desativar: remove apenas o lembrete do usuário atual
+      await supabase
         .from('task_reminders')
         .delete()
         .eq('task_id', props.taskId)
         .eq('user_id', user.value.id)
-
-      if (error) {
-        console.error('[TaskReminderModal] handleSave - erro ao deletar:', error)
-        throw error
-      }
     } else {
-      // Salvar/atualizar lembrete
-      console.log('[TaskReminderModal] handleSave - salvando lembrete')
+      // Determinar quais usuários receberão o lembrete
+      const targetUserIds = config.value.notifyAllAssignees && assignees.value.length > 0
+        ? assignees.value.map(a => a.id)
+        : [user.value.id]
+
+      // Garantir que o usuário atual sempre está incluído
+      if (!targetUserIds.includes(user.value.id)) {
+        targetUserIds.push(user.value.id)
+      }
+
+      // Upsert para cada usuário alvo
+      const upsertRows = targetUserIds.map(uid => ({
+        task_id: props.taskId,
+        user_id: uid,
+        enabled: true,
+        reminder_time: config.value.reminderTime + ':00',
+        days_before: config.value.daysBefore,
+        notify_all_assignees: config.value.notifyAllAssignees
+      }))
+
       const { error } = await supabase
         .from('task_reminders')
-        .upsert({
-          task_id: props.taskId,
-          user_id: user.value.id,
-          enabled: config.value.enabled,
-          reminder_time: config.value.reminderTime + ':00',
-          days_before: config.value.daysBefore
-        }, {
-          onConflict: 'task_id,user_id'
-        })
+        .upsert(upsertRows, { onConflict: 'task_id,user_id' })
 
-      if (error) {
-        console.error('[TaskReminderModal] handleSave - erro ao salvar:', error)
-        throw error
-      }
+      if (error) throw error
     }
 
-    console.log('[TaskReminderModal] handleSave - sucesso!')
     emit('saved')
     isOpen.value = false
   } catch (err: any) {
-    console.error('[TaskReminderModal] handleSave - exceção:', err)
+    console.error('[TaskReminderModal] handleSave error:', err)
     alert('Erro ao salvar: ' + (err.message || 'Tente novamente'))
   } finally {
     saving.value = false
   }
+}
+
+function getInitials(name: string): string {
+  if (!name) return '?'
+  const parts = name.trim().split(' ')
+  if (parts.length === 1) return parts[0].charAt(0).toUpperCase()
+  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase()
 }
 </script>
