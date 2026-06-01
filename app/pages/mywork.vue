@@ -8,6 +8,136 @@
         <p class="text-neutral-600">Tarefas que você concluiu</p>
       </div>
 
+      <!-- Widgets Row -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+
+        <!-- Task Status -->
+        <div class="bg-white rounded-xl p-6 shadow-sm border border-neutral-200">
+          <h3 class="font-semibold text-[18px] leading-snug text-neutral-900 mb-6" style="font-family: 'Plus Jakarta Sans', sans-serif;">
+            Task Status
+          </h3>
+          <div v-if="widgetsLoading" class="flex items-center justify-center py-8">
+            <div class="w-5 h-5 rounded-full border-2 border-[#4744e5] border-t-transparent animate-spin" />
+          </div>
+          <div v-else-if="statusData.length === 0" class="text-sm text-neutral-400 py-4 text-center">
+            Nenhum dado disponível
+          </div>
+          <div v-else class="space-y-4">
+            <div v-for="s in statusData" :key="s.name">
+              <div class="flex justify-between mb-1" style="font-family: 'Inter', sans-serif; font-size: 13px; letter-spacing: 0.04em; font-weight: 600; line-height: 1.2;">
+                <span :style="{ color: s.color }">{{ s.name }}</span>
+                <span class="text-neutral-800">{{ statusPercent(s.count) }}%</span>
+              </div>
+              <div class="w-full bg-[#f0edef] h-2 rounded-full overflow-hidden">
+                <div
+                  class="h-full rounded-full transition-all duration-500"
+                  :style="{ width: statusPercent(s.count) + '%', backgroundColor: s.color }"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Team Workload -->
+        <div class="bg-white rounded-xl p-6 shadow-sm border border-neutral-200">
+          <h3 class="font-semibold text-[18px] leading-snug text-neutral-900 mb-6" style="font-family: 'Plus Jakarta Sans', sans-serif;">
+            Team Workload
+          </h3>
+          <div v-if="widgetsLoading" class="flex items-center justify-center py-8">
+            <div class="w-5 h-5 rounded-full border-2 border-[#4744e5] border-t-transparent animate-spin" />
+          </div>
+          <div v-else-if="workloadData.length === 0" class="text-sm text-neutral-400 py-4 text-center">
+            Nenhum membro encontrado
+          </div>
+          <div v-else class="space-y-4">
+            <div v-for="m in workloadData" :key="m.userId" class="flex items-center gap-3">
+              <!-- Avatar -->
+              <img
+                v-if="m.avatarUrl"
+                :src="m.avatarUrl"
+                :alt="m.name"
+                class="w-8 h-8 rounded-full object-cover border border-neutral-200 shrink-0"
+              />
+              <div
+                v-else
+                class="w-8 h-8 rounded-full bg-[#e1dfff] text-[#4744e5] flex items-center justify-center text-[11px] font-bold shrink-0"
+              >
+                {{ initials(m.name) }}
+              </div>
+              <!-- Barra -->
+              <div class="flex-1 min-w-0">
+                <div class="flex justify-between mb-1" style="font-family: 'Inter', sans-serif; font-size: 13px; letter-spacing: 0.04em; font-weight: 600; line-height: 1.2;">
+                  <span class="text-neutral-800 truncate">{{ m.name }}</span>
+                  <span class="text-neutral-500 shrink-0 ml-2">{{ m.taskCount }} tasks</span>
+                </div>
+                <div class="w-full bg-[#f0edef] h-1.5 rounded-full overflow-hidden">
+                  <div
+                    class="h-full rounded-full bg-[#4744e5] transition-all duration-500"
+                    :style="{ width: workloadPercent(m.taskCount) + '%' }"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Vence em Breve -->
+        <div class="bg-white rounded-xl p-6 shadow-sm border border-neutral-200">
+          <h3 class="font-semibold text-[18px] leading-snug text-neutral-900 mb-6" style="font-family: 'Plus Jakarta Sans', sans-serif;">
+            Vence em Breve
+          </h3>
+          <div v-if="widgetsLoading" class="flex items-center justify-center py-8">
+            <div class="w-5 h-5 rounded-full border-2 border-[#4744e5] border-t-transparent animate-spin" />
+          </div>
+          <div v-else-if="upcomingTasks.length === 0" class="text-sm text-neutral-400 py-4 text-center">
+            Nenhuma tarefa próxima
+          </div>
+          <div v-else class="space-y-5">
+            <!-- Hoje -->
+            <div v-if="upcomingToday.length">
+              <p class="text-[11px] font-bold text-red-500 uppercase tracking-widest mb-2">Today</p>
+              <div class="space-y-2 pl-3 border-l-2 border-red-500">
+                <div v-for="t in upcomingToday" :key="t.id" class="flex items-center justify-between">
+                  <span class="text-sm font-semibold text-neutral-800 truncate">{{ t.title }}</span>
+                  <span class="text-xs text-neutral-400 shrink-0 ml-2">{{ t.boardName }}</span>
+                </div>
+              </div>
+            </div>
+            <!-- Amanhã -->
+            <div v-if="upcomingTomorrow.length">
+              <p class="text-[11px] font-bold text-orange-500 uppercase tracking-widest mb-2">Tomorrow</p>
+              <div class="space-y-2 pl-3 border-l-2 border-orange-500">
+                <div v-for="t in upcomingTomorrow" :key="t.id" class="flex items-center justify-between">
+                  <span class="text-sm font-semibold text-neutral-800 truncate">{{ t.title }}</span>
+                  <span class="text-xs text-neutral-400 shrink-0 ml-2">{{ t.boardName }}</span>
+                </div>
+              </div>
+            </div>
+            <!-- Próximos 7 dias -->
+            <div v-if="upcomingNext7.length">
+              <p class="text-[11px] font-bold text-purple-500 uppercase tracking-widest mb-2">Next 7 Days</p>
+              <div class="space-y-2 pl-3 border-l-2 border-purple-400">
+                <div v-for="t in upcomingNext7" :key="t.id" class="flex items-center justify-between">
+                  <span class="text-sm text-neutral-700 truncate">{{ t.title }}</span>
+                  <span class="text-xs text-neutral-400 shrink-0 ml-2">{{ formatDateShort(t.dueDate) }}</span>
+                </div>
+              </div>
+            </div>
+            <!-- Próximos 30 dias -->
+            <div v-if="upcomingNext30.length">
+              <p class="text-[11px] font-bold text-neutral-400 uppercase tracking-widest mb-2">Next 30 Days</p>
+              <div class="space-y-2 pl-3 border-l-2 border-neutral-300">
+                <div v-for="t in upcomingNext30" :key="t.id" class="flex items-center justify-between">
+                  <span class="text-sm text-neutral-600 truncate">{{ t.title }}</span>
+                  <span class="text-xs text-neutral-400 shrink-0 ml-2">{{ formatDateShort(t.dueDate) }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
       <!-- Stats -->
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         <div class="bg-white rounded-xl p-5 shadow-sm border border-neutral-200">
@@ -152,11 +282,13 @@
     v-model="showModal"
     :task-id="selectedTask.id"
     :board-id="selectedTask.board_id"
+    :initial-task="selectedTask"
   />
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useDashboard } from '~/composables/useDashboard'
 
 definePageMeta({ layout: 'default' })
 
@@ -166,55 +298,79 @@ const { user } = useAuth()
 const tasks = ref<any[]>([])
 const loading = ref(false)
 const showModal = ref(false)
-const selectedTask = ref<{ id: string; board_id: string } | null>(null)
+const selectedTask = ref<{
+  id: string
+  board_id: string
+  title: string
+  description?: string | null
+  status_id?: string | null
+  priority_id?: string | null
+  start_date?: string | null
+  due_date?: string | null
+  budget?: number | null
+} | null>(null)
 
+// ── Dashboard widgets ──────────────────────────────────────────────────────
+const { upcomingTasks, fetchUpcomingTasks } = useDashboard()
+const widgetsLoading = ref(false)
+
+// Status agrupado por nome (deduplicado entre boards)
+interface StatusItem { name: string; color: string; count: number }
+const statusData = ref<StatusItem[]>([])
+
+// Workload: membros responsáveis em boards criados pelo usuário
+interface WorkloadMember { userId: string; name: string; avatarUrl: string | null; taskCount: number }
+const workloadData = ref<WorkloadMember[]>([])
+
+// ── Computed ───────────────────────────────────────────────────────────────
 const totalBudget = computed(() => tasks.value.reduce((s, t) => s + (t.budget || 0), 0))
 const uniqueBoards = computed(() => new Set(tasks.value.map(t => t.board_id)).size)
 
+const totalStatusCount = computed(() => statusData.value.reduce((s, d) => s + d.count, 0))
+function statusPercent(count: number) {
+  if (!totalStatusCount.value) return 0
+  return Math.round((count / totalStatusCount.value) * 100)
+}
+
+const maxWorkload = computed(() => Math.max(...workloadData.value.map(m => m.taskCount), 1))
+function workloadPercent(count: number) {
+  return Math.round((count / maxWorkload.value) * 100)
+}
+
+// Upcoming agrupados por período
+const upcomingToday    = computed(() => upcomingTasks.value.filter(t => t.daysUntilDue === 0))
+const upcomingTomorrow = computed(() => upcomingTasks.value.filter(t => t.daysUntilDue === 1))
+const upcomingNext7    = computed(() => upcomingTasks.value.filter(t => t.daysUntilDue >= 2 && t.daysUntilDue <= 7))
+const upcomingNext30   = computed(() => upcomingTasks.value.filter(t => t.daysUntilDue >= 8 && t.daysUntilDue <= 30))
+
+function initials(name: string) {
+  return name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase()
+}
+
+// ── Queries ────────────────────────────────────────────────────────────────
 async function fetchCompletedTasks() {
   if (!user.value) return
   loading.value = true
-
   try {
-    // Buscar tarefas criadas pelo usuário com status is_done = true
     const { data: created } = await supabase
       .from('tasks')
-      .select(`
-        *,
-        board:boards!inner(id, name),
-        priority:task_priorities(id, name, color),
-        status:task_statuses!inner(id, name, color, is_done),
-        task_assignees(user_id)
-      `)
+      .select(`*, board:boards!inner(id, name), priority:task_priorities(id, name, color), status:task_statuses!inner(id, name, color, is_done), task_assignees(user_id)`)
       .eq('created_by', user.value.id)
       .eq('status.is_done', true)
       .is('archived_at', null)
 
-    // Buscar tarefas onde é responsável com status is_done = true
     const { data: assigned } = await supabase
       .from('tasks')
-      .select(`
-        *,
-        board:boards!inner(id, name),
-        priority:task_priorities(id, name, color),
-        status:task_statuses!inner(id, name, color, is_done),
-        task_assignees!inner(user_id)
-      `)
+      .select(`*, board:boards!inner(id, name), priority:task_priorities(id, name, color), status:task_statuses!inner(id, name, color, is_done), task_assignees!inner(user_id)`)
       .eq('task_assignees.user_id', user.value.id)
       .eq('status.is_done', true)
       .is('archived_at', null)
 
-    // Combinar e deduplicar
     const all = [...(created || []), ...(assigned || [])]
     const unique = Array.from(new Map(all.map(t => [t.id, t])).values())
-
-    // Filtrar apenas as que realmente têm is_done = true (o filtro do Supabase pode não funcionar em joins)
     tasks.value = unique
       .filter(t => t.status?.is_done === true)
-      .sort((a, b) => {
-        // Ordenar por data de atualização (mais recentes primeiro)
-        return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
-      })
+      .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
   } catch (e) {
     console.error('[mywork] Erro ao carregar tarefas:', e)
   } finally {
@@ -222,8 +378,115 @@ async function fetchCompletedTasks() {
   }
 }
 
+/**
+ * Task Status — apenas boards privados do usuário.
+ * Inclui tarefas sem status (status_id = NULL) como "Sem status".
+ * Agrupa por nome para evitar duplicatas entre boards.
+ */
+async function fetchMyTaskStatus(boardIds: string[]) {
+  if (!boardIds.length) return
+  try {
+    // Buscar TODAS as tarefas com seu status (LEFT JOIN via select aninhado)
+    const { data: taskRows } = await supabase
+      .from('tasks')
+      .select('status_id, task_statuses(id, name, color, is_done)')
+      .in('board_id', boardIds)
+      .is('archived_at', null)
+
+    if (!taskRows) return
+
+    // Agrupar por nome (case-insensitive), incluindo NULL como "Sem status"
+    const byName = new Map<string, StatusItem>()
+
+    for (const t of taskRows) {
+      const status = (t as any).task_statuses
+      const key   = status ? status.name.toLowerCase().trim() : '__no_status__'
+      const name  = status ? status.name  : 'Sem status'
+      const color = status ? status.color : '#C4C4C4'
+
+      if (byName.has(key)) {
+        byName.get(key)!.count++
+      } else {
+        byName.set(key, { name, color, count: 1 })
+      }
+    }
+
+    statusData.value = Array.from(byName.values()).sort((a, b) => b.count - a.count)
+  } catch (e) {
+    console.error('[mywork] Erro ao carregar status:', e)
+  }
+}
+
+/**
+ * Busca membros responsáveis por tarefas nos boards criados pelo usuário logado.
+ * Agrupa por pessoa e conta quantas tarefas ativas (não arquivadas, não concluídas) cada um tem.
+ */
+async function fetchTeamWorkload(boardIds: string[]) {
+  if (!boardIds.length) return
+
+  try {
+    // Buscar IDs de status "concluído" para excluir
+    const { data: doneStatuses } = await supabase
+      .from('task_statuses')
+      .select('id')
+      .in('board_id', boardIds)
+      .eq('is_done', true)
+
+    const doneIds: string[] = (doneStatuses || []).map((s: any) => s.id)
+
+    // Buscar task_assignees com perfil, filtrando pelos boards do usuário
+    const { data: rows } = await supabase
+      .from('task_assignees')
+      .select(`
+        user_id,
+        profiles:user_id ( id, full_name, avatar_url ),
+        tasks!inner ( id, board_id, archived_at, status_id )
+      `)
+      .in('tasks.board_id', boardIds)
+      .is('tasks.archived_at', null)
+
+    if (!rows) return
+
+    const map = new Map<string, WorkloadMember>()
+    for (const row of rows) {
+      const task = row.tasks as any
+      // Excluir tarefas concluídas
+      if (doneIds.includes(task.status_id)) continue
+
+      const uid = row.user_id
+      if (!map.has(uid)) {
+        const profile = row.profiles as any
+        map.set(uid, {
+          userId: uid,
+          name: profile?.full_name || 'Sem nome',
+          avatarUrl: profile?.avatar_url || null,
+          taskCount: 0
+        })
+      }
+      map.get(uid)!.taskCount++
+    }
+
+    workloadData.value = Array.from(map.values())
+      .filter(m => m.taskCount > 0)
+      .sort((a, b) => b.taskCount - a.taskCount)
+  } catch (e) {
+    console.error('[mywork] Erro ao carregar workload:', e)
+  }
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────
 function openModal(task: any) {
-  selectedTask.value = { id: task.id, board_id: task.board_id }
+  selectedTask.value = {
+    id: task.id,
+    board_id: task.board_id,
+    title: task.title,
+    description: task.description,
+    status_id: task.status_id,
+    priority_id: task.priority_id,
+    start_date: task.start_date,
+    due_date: task.due_date,
+    budget: task.budget,
+  }
   showModal.value = true
 }
 
@@ -232,9 +495,45 @@ function formatDate(dateStr: string) {
   return `${String(d).padStart(2, '0')}/${String(m).padStart(2, '0')}/${y}`
 }
 
+function formatDateShort(dateStr: string) {
+  const parts = dateStr.split('-').map(Number)
+  const m = parts[1]
+  const d = parts[2]
+  const months = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
+  return `${months[(m ?? 1) - 1]} ${d}`
+}
+
 function formatCurrency(value: number) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)
 }
 
-onMounted(fetchCompletedTasks)
+// ── Mount ──────────────────────────────────────────────────────────────────
+onMounted(async () => {
+  await fetchCompletedTasks()
+
+  // Boards privados criados pelo usuário → Task Status pessoal
+  const { data: privateBoards } = await supabase
+    .from('boards')
+    .select('id')
+    .eq('created_by', user.value?.id)
+    .eq('visibility', 'private')
+
+  const privateBoardIds = (privateBoards || []).map((b: any) => b.id) as string[]
+
+  // Todos os boards criados pelo usuário → Team Workload + Vence em Breve
+  const { data: allMyBoards } = await supabase
+    .from('boards')
+    .select('id')
+    .eq('created_by', user.value?.id)
+
+  const allMyBoardIds = (allMyBoards || []).map((b: any) => b.id) as string[]
+
+  widgetsLoading.value = true
+  await Promise.all([
+    privateBoardIds.length ? fetchMyTaskStatus(privateBoardIds) : Promise.resolve(),
+    allMyBoardIds.length  ? fetchTeamWorkload(allMyBoardIds)   : Promise.resolve(),
+    allMyBoardIds.length  ? fetchUpcomingTasks(allMyBoardIds)  : Promise.resolve(),
+  ])
+  widgetsLoading.value = false
+})
 </script>

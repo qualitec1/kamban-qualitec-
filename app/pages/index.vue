@@ -289,6 +289,7 @@
     v-model="showTaskModal"
     :task-id="selectedTask.id"
     :board-id="selectedTask.board_id"
+    :initial-task="selectedTask"
   />
 </template>
 
@@ -306,9 +307,19 @@ const { filterTasks, hasActiveFilters, clearFilters } = useMyTasksFilters()
 
 // Modal de tarefa
 const showTaskModal = ref(false)
-const selectedTask = ref<{ id: string; board_id: string } | null>(null)
+const selectedTask = ref<{
+  id: string
+  board_id: string
+  title?: string
+  description?: string | null
+  status_id?: string | null
+  priority_id?: string | null
+  start_date?: string | null
+  due_date?: string | null
+  budget?: number | null
+} | null>(null)
 
-function openTaskModal(task: { id: string; board_id: string }) {
+function openTaskModal(task: any) {
   selectedTask.value = task
   showTaskModal.value = true
 }

@@ -76,7 +76,7 @@
         :is-dragging="draggingTaskId === task.id"
         :board-id="boardId"
         :can-edit="canEdit"
-        @click="$emit('open-task', task.id)"
+        @click="$emit('open-task', task)"
         @drag-start="handleDragStart(task.id)"
         @drag-end="handleDragEnd"
         @touch-drag-start="handleTouchDragStart"
@@ -151,7 +151,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'open-task', taskId: string): void
+  (e: 'open-task', task: { id: string; board_id: string; title: string; description?: string | null; status_id?: string | null; priority_id?: string | null; start_date?: string | null; due_date?: string | null; budget?: number | null }): void
   (e: 'start-create'): void
   (e: 'save'): void
   (e: 'cancel'): void

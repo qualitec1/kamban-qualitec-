@@ -1,10 +1,11 @@
 <template>
-  <BaseModal :model-value="props.modelValue" :title="task?.title ?? 'Tarefa'" size="xl" @update:model-value="onClose">
-    <div v-if="loading" class="flex items-center justify-center py-12">
+  <BaseModal :model-value="props.modelValue" :title="draftTitle || task?.title || 'Tarefa'" size="xl" @update:model-value="onClose">
+    <!-- Spinner apenas quando não há dados iniciais e ainda está carregando -->
+    <div v-if="!dataLoaded" class="flex items-center justify-center py-12">
       <div class="w-6 h-6 rounded-full border-2 border-primary-400 border-t-transparent animate-spin" />
     </div>
 
-    <div v-else-if="task" class="space-y-6">
+    <div v-else class="space-y-6">
 
       <!-- Título editável inline -->
       <div>
@@ -173,8 +174,8 @@
 
       <!-- Metadados -->
       <div class="flex flex-wrap gap-4 pt-2 border-t border-neutral-100 text-xs text-neutral-400">
-        <span v-if="task.created_at">Criado em {{ formatDate(task.created_at) }}</span>
-        <span v-if="task.updated_at">Atualizado {{ formatRelative(task.updated_at) }}</span>
+        <span v-if="taskCreatedAt">Criado em {{ formatDate(taskCreatedAt) }}</span>
+        <span v-if="taskUpdatedAt">Atualizado {{ formatRelative(taskUpdatedAt) }}</span>
       </div>
     </div>
 
@@ -249,8 +250,8 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
 import { useTaskDetail } from '~/composables/useTaskDetail'
-import { useTaskStatuses } from '~/composables/useTaskStatuses'
-import { useTaskPriorities } from '~/composables/useTaskPriorities'
+import { useTaskStatuses, type TaskStatus } from '~/composables/useTaskStatuses'
+import { useTaskPriorities, type TaskPriority } from '~/composables/useTaskPriorities'
 import { useTaskAssignees } from '~/composables/useTaskAssignees'
 import { useBoardPermissions } from '~/composables/useBoardPermissions'
 import SubtasksSection from '~/components/SubtasksSection.vue'
@@ -259,6 +260,15 @@ const props = defineProps<{
   taskId: string
   boardId: string
   modelValue: boolean
+  initialTask?: {
+    title: string
+    description?: string | null
+    status_id?: string | null
+    priority_id?: string | null
+    start_date?: string | null
+    due_date?: string | null
+    budget?: number | null
+  }
 }>()
 
 const emit = defineEmits<{
@@ -274,6 +284,10 @@ watch(open, v => emit('update:modelValue', v))
 const { task, loading, fetchTask, updateTask } = useTaskDetail()
 const { statuses, fetchStatuses } = useTaskStatuses(props.boardId)
 const { priorities, fetchPriorities } = useTaskPriorities(props.boardId)
+
+// Typed aliases para garantir inferência correta no template
+const typedStatuses = statuses as import('vue').Ref<TaskStatus[]>
+const typedPriorities = priorities as import('vue').Ref<TaskPriority[]>
 const { assignees, fetchAssignees } = useTaskAssignees(props.taskId)
 const { canEdit: canEditTasks, fetchUserRole } = useBoardPermissions(props.boardId)
 
@@ -298,6 +312,9 @@ const dataLoaded = ref(false)
 
 function syncDrafts() {
   if (!task.value) return
+  // Se já tínhamos dados iniciais e o usuário pode ter editado, não sobrescrever
+  // Apenas preencher campos que ainda estão vazios (ex: notes, archived_at não vêm do initialTask)
+  if (props.initialTask && dataLoaded.value) return
   draftTitle.value       = task.value.title
   draftDescription.value = task.value.description ?? ''
   draftStatusId.value    = task.value.status_id
@@ -334,14 +351,44 @@ const hasUnsavedChanges = computed(() => {
 
 watch(task, syncDrafts)
 
-// Função para carregar todos os dados
+// Computed para metadados — cast explícito para contornar inferência do Volar com #imports
+const taskCreatedAt = computed((): string | null => (task.value as any)?.created_at ?? null)
+const taskUpdatedAt = computed((): string | null => (task.value as any)?.updated_at ?? null)
+
 async function loadAllData() {
   console.log('[TaskModal] Loading all data for task:', props.taskId)
-  dataLoaded.value = false
-  
+
+  // Se temos dados iniciais, pré-popular os drafts imediatamente (sem spinner)
+  const initial = props.initialTask as { title: string; description?: string | null; status_id?: string | null; priority_id?: string | null; start_date?: string | null; due_date?: string | null; budget?: number | null } | undefined
+  if (initial) {
+    draftTitle.value       = initial.title
+    draftDescription.value = initial.description ?? ''
+    draftStatusId.value    = initial.status_id ?? null
+    draftPriorityId.value  = initial.priority_id ?? null
+    draftStartDate.value   = initial.start_date ?? ''
+    draftDueDate.value     = initial.due_date ?? ''
+    draftBudget.value      = initial.budget != null
+      ? String(initial.budget).replace('.', ',')
+      : ''
+    // Snapshot para detectar mudanças
+    originalValues.value = {
+      title: draftTitle.value,
+      description: draftDescription.value,
+      status_id: draftStatusId.value,
+      priority_id: draftPriorityId.value,
+      start_date: draftStartDate.value,
+      due_date: draftDueDate.value,
+      budget: draftBudget.value
+    }
+    // Marcar como carregado para mostrar o conteúdo imediatamente
+    dataLoaded.value = true
+  } else {
+    dataLoaded.value = false
+  }
+
   try {
     await Promise.all([
-      fetchTask(props.taskId),
+      fetchTask(props.taskId),       // busca campos extras (notes, archived_at, created_at…)
       fetchStatuses(),
       fetchPriorities(),
       fetchAssignees(props.taskId),

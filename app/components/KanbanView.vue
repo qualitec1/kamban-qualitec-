@@ -162,7 +162,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'open-task', taskId: string): void
+  (e: 'open-task', task: { id: string; board_id: string; title: string; description?: string | null; status_id?: string | null; priority_id?: string | null; start_date?: string | null; due_date?: string | null; budget?: number | null }): void
   (e: 'add-group'): void
   (e: 'create-task', data: { groupId: string; title: string }): void
   (e: 'move-task', data: { taskId: string; sourceGroupId: string; targetGroupId: string }): void

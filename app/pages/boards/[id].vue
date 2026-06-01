@@ -70,7 +70,7 @@
       :priorities="priorities"
       :can-edit="canEdit"
       :board-id="boardId"
-      @open-task="(taskId: string) => { selectedTaskId = taskId; showTaskModal = true }"
+      @open-task="(task) => { selectedTaskId = task.id; selectedTaskData = task; showTaskModal = true }"
       @add-group="openAddGroup()"
       @create-task="(data: { groupId: string; title: string }) => saveNewTask(data.groupId, data.title)"
       @move-task="(data: { taskId: string; sourceGroupId: string; targetGroupId: string }) => onTaskDrop('', data.targetGroupId)"
@@ -105,6 +105,7 @@
       v-model="showTaskModal"
       :task-id="selectedTaskId"
       :board-id="boardId"
+      :initial-task="selectedTaskData ?? undefined"
       @updated="handleTaskUpdated"
       @deleted="handleTaskDeleted"
     />
@@ -192,6 +193,11 @@ const { deleteBoard } = useBoards()
 // Task modal state
 const selectedTaskId = ref<string | null>(null)
 const showTaskModal = ref(false)
+const selectedTaskData = ref<{
+  id: string; board_id: string; title: string
+  description?: string | null; status_id?: string | null; priority_id?: string | null
+  start_date?: string | null; due_date?: string | null; budget?: number | null
+} | null>(null)
 
 // Save preference helper
 function savePreference(key: string, value: string) {
@@ -230,6 +236,7 @@ function handleTaskUpdated() {
 function handleTaskDeleted() {
   showTaskModal.value = false
   selectedTaskId.value = null
+  selectedTaskData.value = null
   fetchAll(showArchived.value)
 }
 

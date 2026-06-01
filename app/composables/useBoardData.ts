@@ -259,7 +259,8 @@ export function useBoardData(boardId: string) {
               email,
               avatar_url
             )
-          )
+          ),
+          task_attachments (count)
         `)
         .in('group_id', groupIds)
         .order('position', { ascending: true })
@@ -290,10 +291,14 @@ export function useBoardData(boardId: string) {
               .map((ta: any) => ta.profiles)
               .filter(Boolean)
             
-            // Adicionar tarefa com assignees processados
+            // Extrair contagem de anexos do aggregate retornado pelo Supabase
+            const attachment_count: number = (task.task_attachments as any)?.[0]?.count ?? 0
+
+            // Adicionar tarefa com assignees e attachment_count processados
             grouped[task.group_id].push({
               ...task,
-              assignees // Adicionar assignees diretamente na tarefa
+              assignees,
+              attachment_count
             })
           }
         })

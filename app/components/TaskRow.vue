@@ -67,6 +67,7 @@
                   <AttachmentsCell
                     v-else-if="col.key === 'attachments'"
                     :task-id="task.id"
+                    :initial-count="task.attachment_count"
                   />
                   <NotesCell
                     v-else-if="col.key === 'notes'"
@@ -182,6 +183,7 @@
               <AttachmentsCell
                 v-else-if="col.key === 'attachments'"
                 :task-id="task.id"
+                :initial-count="task.attachment_count"
               />
               <NotesCell
                 v-else-if="col.key === 'notes'"
@@ -228,6 +230,7 @@
         v-model="showModal"
         :task-id="task.id"
         :board-id="task.board_id"
+        :initial-task="task"
         @updated="onTaskUpdated"
         @deleted="onTaskDeleted"
       />

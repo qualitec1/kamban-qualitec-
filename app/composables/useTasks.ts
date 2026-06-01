@@ -6,7 +6,9 @@ export type TaskRow = Pick<
   Tables<'tasks'>,
   'id' | 'title' | 'group_id' | 'board_id' | 'status_id' | 'priority_id' |
   'due_date' | 'start_date' | 'description' | 'notes' | 'budget' | 'updated_at' | 'position'
->
+> & {
+  attachment_count?: number
+}
 
 export function useTasks() {
   const supabase = useNuxtApp().$supabase as any

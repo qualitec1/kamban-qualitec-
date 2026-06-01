@@ -47,10 +47,16 @@ import { useTaskAttachments } from '~/composables/useTaskAttachments'
 const props = defineProps<{ 
   taskId: string
   isSubtask?: boolean
+  initialCount?: number
 }>()
 
 const { count, loading, fetchCount } = useTaskAttachments(props.taskId, props.isSubtask)
 const modalOpen = ref(false)
+
+// Se o pai já passou a contagem, usar imediatamente sem request
+if (props.initialCount !== undefined) {
+  count.value = props.initialCount
+}
 
 const tooltip = computed(() =>
   count.value === 0
@@ -64,9 +70,14 @@ function openModal() {
 
 function closeModal() {
   modalOpen.value = false
-  // Recarregar contagem após fechar modal
+  // Recarregar contagem real após fechar modal (pode ter adicionado/removido)
   fetchCount()
 }
 
-onMounted(fetchCount)
+onMounted(() => {
+  // Só faz request se não recebeu a contagem via prop
+  if (props.initialCount === undefined) {
+    fetchCount()
+  }
+})
 </script>
