@@ -23,7 +23,9 @@ export default defineNuxtConfig({
     public: {
       supabaseUrl: process.env.SUPABASE_URL ?? '',
       supabaseAnonKey: process.env.SUPABASE_PUBLISHABLE_KEY ?? process.env.SUPABASE_ANON_KEY ?? '',
-      appUrl: process.env.NUXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
+      appUrl: process.env.NUXT_PUBLIC_APP_URL ?? 'http://localhost:3000',
+      marvelPublicKey: process.env.MARVEL_PUBLIC_KEY ?? '',
+      marvelPrivateKey: process.env.MARVEL_PRIVATE_KEY ?? '',
     }
   },
   app: {

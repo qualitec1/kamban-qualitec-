@@ -7,6 +7,99 @@
     </div>
 
     <form @submit.prevent="handleSubmit" class="space-y-6">
+
+      <!-- Avatar -->
+      <div>
+        <label class="block text-sm font-medium text-neutral-700 mb-3">
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            Foto de Perfil
+          </div>
+        </label>
+
+        <div class="flex items-center gap-5 mb-4">
+          <!-- Preview do avatar atual -->
+          <div class="w-20 h-20 rounded-full overflow-hidden bg-primary-100 flex items-center justify-center border-2 border-neutral-200 shrink-0">
+            <img v-if="form.avatarUrl" :src="form.avatarUrl" alt="Avatar" class="w-full h-full object-cover" />
+            <span v-else class="text-2xl font-bold text-primary-600">
+              {{ (form.fullName || form.email).charAt(0).toUpperCase() }}
+            </span>
+          </div>
+
+          <div class="flex flex-col gap-2">
+            <button type="button" @click="showAvatarPicker = !showAvatarPicker"
+              class="px-4 py-2 text-sm font-medium text-primary-600 border border-primary-300 rounded-lg hover:bg-primary-50 transition-colors">
+              Escolher personagem
+            </button>
+            <button v-if="form.avatarUrl" type="button" @click="form.avatarUrl = ''"
+              class="px-4 py-2 text-sm font-medium text-neutral-500 border border-neutral-200 rounded-lg hover:bg-neutral-50 transition-colors">
+              Remover foto
+            </button>
+          </div>
+        </div>
+
+        <!-- Picker de personagens -->
+        <div v-if="showAvatarPicker" class="border border-neutral-200 rounded-xl overflow-hidden">
+          <!-- Tabs -->
+          <div class="flex border-b border-neutral-200 bg-neutral-50">
+            <button
+              v-for="tab in avatarTabs" :key="tab.id" type="button"
+              @click="activeAvatarTab = tab.id; searchCharacters()"
+              :class="['flex-1 px-4 py-2.5 text-sm font-medium transition-colors',
+                activeAvatarTab === tab.id
+                  ? 'bg-white text-primary-600 border-b-2 border-primary-500'
+                  : 'text-neutral-500 hover:text-neutral-700']">
+              {{ tab.label }}
+            </button>
+          </div>
+
+          <!-- Busca -->
+          <div class="p-3 border-b border-neutral-100">
+            <div class="relative">
+              <svg class="w-4 h-4 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                v-model="charSearch"
+                type="text"
+                :placeholder="activeAvatarTab === 'disney' ? 'Mickey Mouse, Simba...' : 'Spider-Man, Iron Man...'"
+                class="w-full pl-9 pr-4 py-2 text-sm border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-400"
+                @keydown.enter.prevent="searchCharacters"
+              />
+              <button type="button" @click="searchCharacters"
+                class="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 text-xs font-medium bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors">
+                Buscar
+              </button>
+            </div>
+          </div>
+
+          <!-- Resultados -->
+          <div class="p-3 min-h-[120px]">
+            <div v-if="charLoading" class="flex items-center justify-center py-8">
+              <div class="w-6 h-6 rounded-full border-2 border-primary-400 border-t-transparent animate-spin" />
+            </div>
+            <div v-else-if="charError" class="text-center py-6 text-sm text-red-500">{{ charError }}</div>
+            <div v-else-if="charResults.length === 0 && charSearch" class="text-center py-6 text-sm text-neutral-400">
+              Nenhum personagem encontrado
+            </div>
+            <div v-else class="grid grid-cols-4 sm:grid-cols-6 gap-2">
+              <button
+                v-for="char in charResults" :key="char.id" type="button"
+                @click="selectAvatar(char.imageUrl)"
+                :class="['group flex flex-col items-center gap-1 p-1.5 rounded-lg transition-all hover:bg-primary-50',
+                  form.avatarUrl === char.imageUrl ? 'ring-2 ring-primary-500 bg-primary-50' : '']">
+                <div class="w-12 h-12 rounded-full overflow-hidden bg-neutral-100 border-2 border-transparent group-hover:border-primary-300 transition-colors">
+                  <img :src="char.imageUrl" :alt="char.name" class="w-full h-full object-cover" loading="lazy" />
+                </div>
+                <span class="text-[10px] text-neutral-500 text-center leading-tight line-clamp-2 w-full">{{ char.name }}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Nome Completo -->
       <div>
         <label for="fullName" class="block text-sm font-medium text-neutral-700 mb-2">
@@ -138,47 +231,128 @@ const messageType = ref<'success' | 'error'>('success')
 const form = ref({
   fullName: '',
   email: '',
-  phone: ''
+  phone: '',
+  avatarUrl: ''
 })
 
 const originalData = ref({
   fullName: '',
   email: '',
-  phone: ''
+  phone: '',
+  avatarUrl: ''
 })
 
+// ── Avatar picker ──────────────────────────────────────────────────────────
+const showAvatarPicker = ref(false)
+const activeAvatarTab = ref<'disney' | 'marvel'>('disney')
+const charSearch = ref('')
+const charLoading = ref(false)
+const charError = ref('')
+const charResults = ref<{ id: string | number; name: string; imageUrl: string }[]>([])
+
+const avatarTabs = [
+  { id: 'disney' as const, label: '🏰 Disney' },
+  { id: 'marvel' as const, label: '🦸 Marvel' },
+]
+
+async function searchCharacters() {
+  charError.value = ''
+  charResults.value = []
+  charLoading.value = true
+
+  try {
+    if (activeAvatarTab.value === 'disney') {
+      await searchDisney()
+    } else {
+      await searchMarvel()
+    }
+  } catch (e: any) {
+    charError.value = 'Erro ao buscar personagens'
+    console.error(e)
+  } finally {
+    charLoading.value = false
+  }
+}
+
+async function searchDisney() {
+  const query = charSearch.value.trim() || 'Mickey Mouse'
+  const encoded = encodeURIComponent(query)
+  const res = await fetch(`https://api.disneyapi.dev/character?name=${encoded}`)
+  const data = await res.json()
+  const list = data.data ?? []
+  charResults.value = list
+    .filter((c: any) => c.imageUrl)
+    .slice(0, 18)
+    .map((c: any) => ({ id: c._id, name: c.name, imageUrl: c.imageUrl }))
+}
+
+async function searchMarvel() {
+  // A biblioteca npm 'marvel' usa a API pública da Marvel (developer.marvel.com)
+  // Precisamos de chaves públicas/privadas — usamos fetch direto com timestamp + hash
+  const publicKey = useRuntimeConfig().public.marvelPublicKey as string | undefined
+  const privateKey = useRuntimeConfig().public.marvelPrivateKey as string | undefined
+
+  if (!publicKey || !privateKey) {
+    // Fallback: usar a API sem chaves (endpoint público limitado)
+    charError.value = 'Configure MARVEL_PUBLIC_KEY e MARVEL_PRIVATE_KEY no .env para buscar personagens Marvel'
+    return
+  }
+
+  const ts = Date.now().toString()
+  // Hash md5(ts + privateKey + publicKey)
+  const hashInput = ts + privateKey + publicKey
+  const hashBuffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(hashInput))
+  const hash = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('')
+
+  const query = charSearch.value.trim() || 'Spider-Man'
+  const url = `https://gateway.marvel.com/v1/public/characters?nameStartsWith=${encodeURIComponent(query)}&ts=${ts}&apikey=${publicKey}&hash=${hash}&limit=18`
+  const res = await fetch(url)
+  const data = await res.json()
+  const list = data.data?.results ?? []
+  charResults.value = list
+    .filter((c: any) => c.thumbnail?.path && !c.thumbnail.path.includes('image_not_available'))
+    .map((c: any) => ({
+      id: c.id,
+      name: c.name,
+      imageUrl: `${c.thumbnail.path}.${c.thumbnail.extension}`
+    }))
+}
+
+function selectAvatar(url: string) {
+  form.value.avatarUrl = url
+  showAvatarPicker.value = false
+}
+
+// ── Profile CRUD ───────────────────────────────────────────────────────────
 const hasChanges = computed(() => {
   return form.value.fullName !== originalData.value.fullName ||
          form.value.email !== originalData.value.email ||
-         form.value.phone !== originalData.value.phone
+         form.value.phone !== originalData.value.phone ||
+         form.value.avatarUrl !== originalData.value.avatarUrl
 })
 
 const loadProfile = async () => {
   if (!user.value) return
-
   loading.value = true
   try {
     const { $supabase } = useNuxtApp()
     const supabase = $supabase as any
-    
     const { data, error } = await supabase
       .from('profiles')
-      .select('full_name, email, phone')
+      .select('full_name, email, phone, avatar_url')
       .eq('id', user.value.id)
       .single()
-
     if (error) throw error
-
     if (data) {
       form.value = {
         fullName: data.full_name || '',
         email: data.email || '',
-        phone: data.phone || ''
+        phone: data.phone || '',
+        avatarUrl: data.avatar_url || ''
       }
       originalData.value = { ...form.value }
     }
   } catch (err: any) {
-    console.error('Erro ao carregar perfil:', err)
     showMessage('Erro ao carregar dados do perfil', 'error')
   } finally {
     loading.value = false
@@ -187,41 +361,30 @@ const loadProfile = async () => {
 
 const handleSubmit = async () => {
   if (!user.value || !hasChanges.value) return
-
   loading.value = true
   message.value = ''
-
   try {
     const { $supabase } = useNuxtApp()
     const supabase = $supabase as any
-    
-    // Update profile data
     const { error: profileError } = await supabase
       .from('profiles')
       .update({
         full_name: form.value.fullName,
-        phone: form.value.phone
+        phone: form.value.phone,
+        avatar_url: form.value.avatarUrl || null
       })
       .eq('id', user.value.id)
-
     if (profileError) throw profileError
 
-    // If email changed, update auth email
     if (form.value.email !== originalData.value.email) {
-      const { error: emailError } = await supabase.auth.updateUser({
-        email: form.value.email
-      })
-
+      const { error: emailError } = await supabase.auth.updateUser({ email: form.value.email })
       if (emailError) throw emailError
-      
       showMessage('Perfil atualizado! Verifique seu novo e-mail para confirmar a alteração.', 'success')
     } else {
       showMessage('Perfil atualizado com sucesso!', 'success')
     }
-
     originalData.value = { ...form.value }
   } catch (err: any) {
-    console.error('Erro ao atualizar perfil:', err)
     showMessage(err.message || 'Erro ao atualizar perfil', 'error')
   } finally {
     loading.value = false
@@ -231,17 +394,19 @@ const handleSubmit = async () => {
 const handleCancel = () => {
   form.value = { ...originalData.value }
   message.value = ''
+  showAvatarPicker.value = false
 }
 
 const showMessage = (msg: string, type: 'success' | 'error') => {
   message.value = msg
   messageType.value = type
-  setTimeout(() => {
-    message.value = ''
-  }, 5000)
+  setTimeout(() => { message.value = '' }, 5000)
 }
 
 onMounted(() => {
   loadProfile()
+  // Carregar personagens Disney por padrão
+  charSearch.value = ''
+  searchCharacters()
 })
 </script>
